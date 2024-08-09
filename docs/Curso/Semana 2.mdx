@@ -1,0 +1,414 @@
+---
+sidebar_position: 1
+draft: false
+---
+# SQLite CRUD Parte 1
+
+SQLite es un sistema de gestión de bases de datos relacional (RDBMS) de código abierto y autocontenido. Algunas características clave de SQLite son:
+
+[https://www.sqlite.org/](https://www.sqlite.org/)
+
+:::info
+RDBMS (Sistema de Gestión de Bases de Datos Relacionales) es como una gran biblioteca organizada de manera muy específica. Imagina que tienes una biblioteca con libros, autores y préstamos. Un RDBMS te permite:
+
+Crear estanterías: Estas son como las tablas en una base de datos. Cada estantería tiene secciones (columnas) para diferentes tipos de información, como el título de un libro, el nombre del autor o la fecha de préstamo.
+Organizar los libros: Los libros se colocan en las estanterías (filas) y cada uno tiene un lugar específico.
+Buscar libros: Puedes buscar libros por título, autor o cualquier otra información que tengas.
+Hacer préstamos: Puedes registrar quién se lleva un libro y cuándo lo devuelve.
+Mantener todo ordenado: El RDBMS se asegura de que la información esté siempre actualizada y sin errores.
+:::
+
+1.  **Portabilidad**: SQLite es compatible con múltiples plataformas, incluyendo Windows, macOS, Linux, iOS, Android y más. Esto lo hace muy versátil para ser utilizado en una amplia variedad de aplicaciones.
+2.  **Serverless**: SQLite no requiere un servidor de bases de datos independiente. La base de datos SQLite se integra directamente en la aplicación que la utiliza, lo que la hace muy ligera y fácil de implementar.
+3.  **Autocontenido**: Toda la base de datos, incluyendo definiciones, tablas, índices y datos, se almacena en un solo archivo. Esto facilita su distribución y respaldo.
+4.  **Transaccional**: SQLite admite transacciones ACID (Atomicidad, Consistencia, Aislamiento y Durabilidad) para garantizar la integridad de los datos.
+5.  **Simpleza**: SQLite tiene una API simple y sencilla de usar, lo que la hace fácil de integrar en aplicaciones.
+6.  **Rendimiento**: SQLite es extremadamente rápida y eficiente, siendo capaz de procesar millones de registros sin problemas.
+
+SQLite es ampliamente utilizado en aplicaciones móviles, de escritorio, embebidas y de Internet de las Cosas (IoT) debido a su pequeño tamaño, facilidad de uso y alto rendimiento. Algunas de las aplicaciones que usan SQLite incluyen:
+
+-   Aplicaciones móviles (Android, iOS)
+-   Navegadores web (Chrome, Firefox)
+-   Sistemas operativos (Android, iOS, Windows, Linux)
+-   Aplicaciones de productividad (LibreOffice, SQLiteStudio)
+-   Sistemas embebidos y IoT
+
+
+## SQLite y Android Studio: Una Manera Sencilla de Almacenar Datos en Tus Aplicaciones
+
+### ¿Qué es SQLite?
+
+**SQLite** es una biblioteca que nos permite crear y gestionar bases de datos relacionales de manera muy sencilla. Lo mejor de todo es que no necesita un servidor externo para funcionar, lo que la hace ideal para aplicaciones móviles como las que desarrollamos con Android Studio.
+
+**Características principales de SQLite:**
+
+-   **Ligera y rápida:** Perfecta para dispositivos móviles con recursos limitados.
+-   **Sin servidor:** No requiere una instalación separada, lo que simplifica su uso.
+-   **SQL estándar:** Utiliza el lenguaje SQL para interactuar con la base de datos, lo cual es muy común en el mundo de las bases de datos.
+-   **Embebida:** Se integra directamente en la aplicación, sin necesidad de una conexión externa.
+
+### ¿Por qué usar SQLite en Android Studio?
+
+-   **Almacenamiento de datos local:** Guarda información de forma permanente en el dispositivo del usuario, incluso sin conexión a internet.
+-   **Estructura de datos:** Organiza la información de manera eficiente y fácil de buscar.
+-   **Persistencia de datos:** Mantiene los datos seguros, incluso si la aplicación se cierra o el dispositivo se reinicia.
+-   **Personalización:** Puedes crear tablas y relaciones personalizadas para adaptarse a las necesidades de tu aplicación.
+
+### ¿Cómo funciona SQLite en Android Studio?
+
+1.  **Creación de la base de datos:** Defines el esquema de la base de datos (tablas, columnas, tipos de datos) utilizando código SQL.
+2.  **Operaciones CRUD:** Realizas operaciones de creación, lectura, actualización y eliminación de datos mediante comandos SQL.
+3.  **Acceso a la base de datos:** Utilizas una clase auxiliar (helper) para abrir, cerrar y realizar consultas a la base de datos.
+
+## Instrucciones SQL Básicas para SQLite
+
+**SQLite** es un sistema de gestión de bases de datos relacional ligero y embebido que utiliza el lenguaje SQL (Structured Query Language) para interactuar con los datos. A continuación, te presentaré algunas de las instrucciones SQL más comunes y útiles para trabajar con SQLite:
+
+### Creando una Base de Datos y Tablas
+
+-   **Crear una base de datos:** SQLite crea automáticamente la base de datos cuando se ejecuta la primera instrucción SQL. No necesitas un comando específico para crearla.
+-   **Crear una tabla:**
+    
+    ```sql
+    CREATE TABLE tabla_nombre (
+        columna1 tipo_de_dato,
+        columna2 tipo_de_dato,
+        ...
+    );
+    ```
+    -   **Ejemplo:**
+
+    ```sql
+    CREATE TABLE usuarios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT,
+        email TEXT
+    );
+    ```    
+
+### Insertando Datos
+
+-   **Insertar un registro:**
+
+    ```sql
+    INSERT INTO tabla_nombre (columna1, columna2, ...)
+    VALUES (valor1, valor2, ...);
+    ```  
+
+    -   **Ejemplo:**
+
+    ```sql
+    INSERT INTO usuarios (nombre, email)
+    VALUES ('Juan Pérez', 'juan@example.com');
+    ```
+
+### Consultando Datos
+
+-   **Seleccionar todos los datos de una tabla:**
+
+    ```sql
+    SELECT * FROM tabla_nombre;
+    ```
+
+-   **Seleccionar columnas específicas:**
+
+    ```sql
+    SELECT columna1, columna2 FROM tabla_nombre;
+    ```
+
+-   **Filtrar datos:**
+
+    ```sql
+    SELECT * FROM tabla_nombre WHERE columna1 = valor;
+    ```
+
+-   **Ordenar resultados:**
+
+    ```sql
+    SELECT * FROM tabla_nombre ORDER BY columna1 ASC;  // Orden ascendente
+    SELECT * FROM tabla_nombre ORDER BY columna2 DESC; // Orden descendente
+    ```
+   
+### Actualizando Datos
+
+-   **Actualizar registros:**
+
+    ```sql
+    UPDATE tabla_nombre
+    SET columna1 = nuevo_valor
+    WHERE condición;
+    ```
+
+    -   **Ejemplo:**
+
+    ```sql
+    UPDATE usuarios
+    SET email = 'juan@nuevoemail.com'
+    WHERE id = 1;
+    ```
+   
+### Eliminando Datos
+
+-   **Eliminar registros:**
+
+    ```sql
+    DELETE FROM tabla_nombre WHERE condición;
+    ```
+
+    -   **Ejemplo:**
+
+    ```sql
+    DELETE FROM usuarios WHERE id = 2;
+    ```
+    
+### Otras Instrucciones Útiles
+
+-   **Eliminar una tabla:**
+
+    ```sql
+    DROP TABLE tabla_nombre;
+    ```
+
+-   **Ver la estructura de una tabla:**
+
+    ```sql
+    PRAGMA table_info(tabla_nombre);
+    ```
+
+### Tipos de Datos Comunes en SQLite
+
+-   **INTEGER:** Números enteros.
+-   **REAL:** Números de punto flotante.
+-   **TEXT:** Cadenas de texto.
+-   **BLOB:** Datos binarios.
+
+**Ejemplo Completo:**
+
+```sql
+CREATE TABLE productos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    precio REAL
+);
+
+INSERT INTO productos (nombre, precio) VALUES ('Manzana', 1.5);
+INSERT INTO productos (nombre, precio) VALUES ('Banana', 0.9);
+
+SELECT * FROM productos WHERE precio > 1;
+```
+## Herramientas para el Manejo de SQLite
+
+### SQLite Studio
+
+[https://sqlitestudio.pl/](https://sqlitestudio.pl/)
+
+**SQLite Studio** es una aplicación de escritorio gratuita y de código abierto diseñada específicamente para trabajar con bases de datos SQLite. Actúa como una interfaz gráfica que facilita enormemente la interacción con tus bases de datos, haciendo que tareas como crear tablas, insertar datos, ejecutar consultas y visualizar resultados sea mucho más intuitiva y visual que escribir directamente comandos SQL.
+
+
+
+### DBeaver
+
+[https://dbeaver.io/](https://dbeaver.io/)
+
+**DBeaver** es una potente aplicación de software diseñada para administrar y gestionar una amplia variedad de bases de datos. Actúa como un puente entre tú y tus bases de datos, permitiéndote interactuar con ellas de forma más intuitiva y eficiente a través de una interfaz gráfica.
+
+
+## CRUD Sqlite en Android Studio
+
+### Clase DatabaseHelper
+```java
+public class DatabaseHelper extends SQLiteOpenHelper {
+    private static final String DATABASE_NAME = "data.db";
+    private static final int DATABASE_VERSION = 2;
+
+    // User table
+    private static final String TABLE_USER = "User";
+    private static final String COLUMN_USER_ID = "_id";
+    private static final String COLUMN_USER_NAME = "name";
+    private static final String COLUMN_USER_AGE = "age";
+
+    // Product table
+    private static final String TABLE_PRODUCT = "Product";
+    private static final String COLUMN_PRODUCT_ID = "_id";
+    private static final String COLUMN_PRODUCT_NAME = "name";
+    private static final String COLUMN_PRODUCT_PRICE = "price";
+    private static final String COLUMN_PRODUCT_QUANTITY = "quantity";
+
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        String CREATE_USER_TABLE = "CREATE TABLE " + TABLE_USER + "(" +
+                COLUMN_USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                COLUMN_USER_NAME + " TEXT," +
+                COLUMN_USER_AGE + " INTEGER)";
+        db.execSQL(CREATE_USER_TABLE);
+
+        String CREATE_PRODUCT_TABLE = "CREATE TABLE " + TABLE_PRODUCT + "(" +
+                COLUMN_PRODUCT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                COLUMN_PRODUCT_NAME + " TEXT," +
+                COLUMN_PRODUCT_PRICE + " REAL," +
+                COLUMN_PRODUCT_QUANTITY + " INTEGER)";
+        db.execSQL(CREATE_PRODUCT_TABLE);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT);
+        onCreate(db);
+    }
+
+    // User CRUD Operations:
+
+    // Create (Insert) User
+    public void createUser(String name, int age) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_USER_NAME, name);
+        values.put(COLUMN_USER_AGE, age);
+        db.insert(TABLE_USER, null, values);
+        Log.d("DatabaseHelper", "User created successfully.");
+        db.close();
+    }
+
+    // Read (Select) Users
+    public List<String> readUsers() {
+        List<String> users = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_USER, null, null, null, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                int nameIndex = cursor.getColumnIndex(COLUMN_USER_NAME);
+                int ageIndex = cursor.getColumnIndex(COLUMN_USER_AGE);
+
+                String name = nameIndex != -1 ? cursor.getString(nameIndex) : "N/A";
+                int age = ageIndex != -1 ? cursor.getInt(ageIndex) : -1;
+
+                users.add("Name: " + name + ", Age: " + age);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return users;
+    }
+
+    // Update User
+    public void updateUser(int id, String name, int age) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_USER_NAME, name);
+        values.put(COLUMN_USER_AGE, age);
+        db.update(TABLE_USER, values, COLUMN_USER_ID + "=?", new String[]{String.valueOf(id)});
+        Log.d("DatabaseHelper", "User updated successfully.");
+        db.close();
+    }
+
+    // Delete User
+    public void deleteUser(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_USER, COLUMN_USER_ID + "=?", new String[]{String.valueOf(id)});
+        Log.d("DatabaseHelper", "User deleted successfully.");
+        db.close();
+    }
+
+    // Product CRUD Operations:
+
+    // Create (Insert) Product
+    public void createProduct(String name, double price, int quantity) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_PRODUCT_NAME, name);
+        values.put(COLUMN_PRODUCT_PRICE, price);
+        values.put(COLUMN_PRODUCT_QUANTITY, quantity);
+        db.insert(TABLE_PRODUCT, null, values);
+        Log.d("DatabaseHelper", "Product created successfully.");
+        db.close();
+    }
+
+    // Read (Select) Products
+    public List<String> readProducts() {
+        List<String> products = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_PRODUCT, null, null, null, null, null, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                int nameIndex = cursor.getColumnIndex(COLUMN_PRODUCT_NAME);
+                int priceIndex = cursor.getColumnIndex(COLUMN_PRODUCT_PRICE);
+                int quantityIndex = cursor.getColumnIndex(COLUMN_PRODUCT_QUANTITY);
+
+                String name = nameIndex != -1 ? cursor.getString(nameIndex) : "N/A";
+                double price = priceIndex != -1 ? cursor.getDouble(priceIndex) : 0.0;
+                int quantity = quantityIndex != -1 ? cursor.getInt(quantityIndex) : 0;
+
+                products.add("Name: " + name + ", Price: " + price + ", Quantity: " + quantity);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return products;
+    }
+
+    // Update Product
+    public void updateProduct(int id, String name, double price, int quantity) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_PRODUCT_NAME, name);
+        values.put(COLUMN_PRODUCT_PRICE, price);
+        values.put(COLUMN_PRODUCT_QUANTITY, quantity);
+        db.update(TABLE_PRODUCT, values, COLUMN_PRODUCT_ID + "=?", new String[]{String.valueOf(id)});
+        Log.d("DatabaseHelper", "Product updated successfully.");
+        db.close();
+    }
+
+    // Delete Product
+    public void deleteProduct(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_PRODUCT, COLUMN_PRODUCT_ID + "=?", new String[]{String.valueOf(id)});
+        Log.d("DatabaseHelper", "Product deleted successfully.");
+        db.close();
+    }
+}
+```
+
+### Uso
+
+```java
+// Crear un registro
+dbHelper.createUser("Juan", 30);
+dbHelper.createUser("Maria", 25);
+
+// Leer registros
+List<String> users = dbHelper.readUsers();
+for (String user : users) {
+    System.out.println(user);
+}
+
+// Actualizar un registro
+dbHelper.updateUser(1, "Juan", 18); // Reemplaza 1 con el ID del registro
+
+// Eliminar un registro
+dbHelper.deleteUser(2); // Reemplaza 2 con el ID del registro
+
+
+dbHelper.createProduct("TV",3500000,5);
+dbHelper.createProduct("PC",3200000,10);
+
+// Leer registros
+List<String> products = dbHelper.readProducts();
+for (String prodcut : products) {
+    System.out.println(prodcut);
+}
+
+// Actualizar un registro
+dbHelper.updateProduct(1, "TV", 2000000, 10); // Reemplaza 1 con el ID del registro
+
+// Eliminar un registro
+dbHelper.deleteProduct(2); // Reemplaza 2 con el ID del registro
+```
