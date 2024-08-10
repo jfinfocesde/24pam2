@@ -380,6 +380,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 ### Uso
 
 ```java
+
+DatabaseHelper dbHelper = new DatabaseHelper(this);
+
 // Crear un registro
 dbHelper.createUser("Juan", 30);
 dbHelper.createUser("Maria", 25);
