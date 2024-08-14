@@ -1,0 +1,293 @@
+---
+sidebar_position: 1
+draft: true
+---
+
+# SQLite CRUD Parte 2
+
+```java
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import java.util.ArrayList;
+import java.util.List;
+
+// Modelo Cliente
+public class Cliente {
+    private int id;
+    private String nombre;
+    private String telefono;
+
+    public Cliente(int id, String nombre, String telefono) {
+        this.id = id;
+        this.nombre = nombre;
+        this.telefono = telefono;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+}
+
+// Modelo Producto
+public class Producto {
+    private int id;
+    private String nombre;
+    private double precio;
+
+    public Producto(int id, String nombre, double precio) {
+        this.id = id;
+        this.nombre = nombre;
+        this.precio = precio;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public double getPrecio() {
+        return precio;
+    }
+}
+
+// Clase DatabaseHelper para administrar la base de datos
+public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static final String DATABASE_NAME = "mydatabase.db";
+    private static final int DATABASE_VERSION = 1;
+
+    // Tabla Cliente
+    private static final String TABLE_CLIENTE = "clientes";
+    private static final String COLUMN_CLIENTE_ID = "_id";
+    private static final String COLUMN_CLIENTE_NOMBRE = "nombre";
+    private static final String COLUMN_CLIENTE_TELEFONO = "telefono";
+
+    // Tabla Producto
+    private static final String TABLE_PRODUCTO = "productos";
+    private static final String COLUMN_PRODUCTO_ID = "_id";
+    private static final String COLUMN_PRODUCTO_NOMBRE = "nombre";
+    private static final String COLUMN_PRODUCTO_PRECIO = "precio";
+
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        // Crear tabla Cliente
+        String CREATE_TABLE_CLIENTE = "CREATE TABLE " + TABLE_CLIENTE + "(" +
+                COLUMN_CLIENTE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                COLUMN_CLIENTE_NOMBRE + " TEXT," +
+                COLUMN_CLIENTE_TELEFONO + " TEXT)";
+        db.execSQL(CREATE_TABLE_CLIENTE);
+
+        // Crear tabla Producto
+        String CREATE_TABLE_PRODUCTO = "CREATE TABLE " + TABLE_PRODUCTO + "(" +
+                COLUMN_PRODUCTO_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                COLUMN_PRODUCTO_NOMBRE + " TEXT," +
+                COLUMN_PRODUCTO_PRECIO + " REAL)";
+        db.execSQL(CREATE_TABLE_PRODUCTO);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_CLIENTE);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCTO);
+        onCreate(db);
+    }
+
+    // Métodos para la tabla Cliente
+
+    public void createCliente(Cliente cliente) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_CLIENTE_NOMBRE, cliente.getNombre());
+        values.put(COLUMN_CLIENTE_TELEFONO, cliente.getTelefono());
+        db.insert(TABLE_CLIENTE, null, values);
+        db.close();
+    }
+
+    public Cliente getCliente(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_CLIENTE, null, COLUMN_CLIENTE_ID + " = ?",
+                new String[]{String.valueOf(id)}, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            String nombre = cursor.getString(cursor.getColumnIndex(COLUMN_CLIENTE_NOMBRE));
+            String telefono = cursor.getString(cursor.getColumnIndex(COLUMN_CLIENTE_TELEFONO));
+            cursor.close();
+            return new Cliente(id, nombre, telefono);
+        }
+        cursor.close();
+        return null;
+    }
+
+    public List<Cliente> getAllClientes() {
+        List<Cliente> clientes = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_CLIENTE, null, null, null, null, null, null);
+        if (cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(cursor.getColumnIndex(COLUMN_CLIENTE_ID));
+                String nombre = cursor.getString(cursor.getColumnIndex(COLUMN_CLIENTE_NOMBRE));
+                String telefono = cursor.getString(cursor.getColumnIndex(COLUMN_CLIENTE_TELEFONO));
+                clientes.add(new Cliente(id, nombre, telefono));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return clientes;
+    }
+
+    public void updateCliente(Cliente cliente) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_CLIENTE_NOMBRE, cliente.getNombre());
+        values.put(COLUMN_CLIENTE_TELEFONO, cliente.getTelefono());
+        db.update(TABLE_CLIENTE, values, COLUMN_CLIENTE_ID + " = ?",
+                new String[]{String.valueOf(cliente.getId())});
+        db.close();
+    }
+
+    public void deleteCliente(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_CLIENTE, COLUMN_CLIENTE_ID + " = ?",
+                new String[]{String.valueOf(id)});
+        db.close();
+    }
+
+    // Métodos para la tabla Producto
+
+    public void createProducto(Producto producto) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_PRODUCTO_NOMBRE, producto.getNombre());
+        values.put(COLUMN_PRODUCTO_PRECIO, producto.getPrecio());
+        db.insert(TABLE_PRODUCTO, null, values);
+        db.close();
+    }
+
+    public Producto getProducto(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_PRODUCTO, null, COLUMN_PRODUCTO_ID + " = ?",
+                new String[]{String.valueOf(id)}, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            String nombre = cursor.getString(cursor.getColumnIndex(COLUMN_PRODUCTO_NOMBRE));
+            double precio = cursor.getDouble(cursor.getColumnIndex(COLUMN_PRODUCTO_PRECIO));
+            cursor.close();
+            return new Producto(id, nombre, precio);
+        }
+        cursor.close();
+        return null;
+    }
+
+    public List<Producto> getAllProductos() {
+        List<Producto> productos = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_PRODUCTO, null, null, null, null, null, null);
+        if (cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(cursor.getColumnIndex(COLUMN_PRODUCTO_ID));
+                String nombre = cursor.getString(cursor.getColumnIndex(COLUMN_PRODUCTO_NOMBRE));
+                double precio = cursor.getDouble(cursor.getColumnIndex(COLUMN_PRODUCTO_PRECIO));
+                productos.add(new Producto(id, nombre, precio));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return productos;
+    }
+
+    public void updateProducto(Producto producto) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_PRODUCTO_NOMBRE, producto.getNombre());
+        values.put(COLUMN_PRODUCTO_PRECIO, producto.getPrecio());
+        db.update(TABLE_PRODUCTO, values, COLUMN_PRODUCTO_ID + " = ?",
+                new String[]{String.valueOf(producto.getId())});
+        db.close();
+    }
+
+    public void deleteProducto(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_PRODUCTO, COLUMN_PRODUCTO_ID + " = ?",
+                new String[]{String.valueOf(id)});
+        db.close();
+    }
+}
+```
+
+**Explicación del código:**
+
+1. **Modelos:**
+   - `Cliente` y `Producto`: Representan las entidades de datos con sus atributos.
+2. **DatabaseHelper:**
+   - Hereda de `SQLiteOpenHelper` para administrar la base de datos.
+   - Define las tablas `clientes` y `productos` con sus columnas.
+   - Implementa métodos para cada acción CRUD (Create, Read, Update, Delete) para ambas tablas.
+
+**Uso del código:**
+
+1. **Obtener una instancia de DatabaseHelper:**
+   ```java
+   DatabaseHelper dbHelper = new DatabaseHelper(this); // 'this' es el contexto de la actividad
+   ```
+
+2. **Crear un nuevo cliente:**
+   ```java
+   Cliente cliente = new Cliente(0, "Juan Pérez", "1234567890");
+   dbHelper.createCliente(cliente);
+   ```
+
+3. **Obtener un cliente por ID:**
+   ```java
+   Cliente cliente = dbHelper.getCliente(1); // Reemplaza 1 con el ID del cliente
+   if (cliente != null) {
+       // Usar el cliente
+   } else {
+       // No se encontró el cliente
+   }
+   ```
+
+4. **Obtener todos los clientes:**
+   ```java
+   List<Cliente> clientes = dbHelper.getAllClientes();
+   for (Cliente cliente : clientes) {
+       // Usar cada cliente
+   }
+   ```
+
+5. **Actualizar un cliente:**
+   ```java
+   Cliente cliente = new Cliente(1, "Ana García", "9876543210");
+   dbHelper.updateCliente(cliente);
+   ```
+
+6. **Eliminar un cliente:**
+   ```java
+   dbHelper.deleteCliente(2); // Reemplaza 2 con el ID del cliente
+   ```
+
+**Uso similar para la tabla `productos`.**
+
+**Puntos importantes:**
+
+* Este código no incluye la interfaz de usuario. Tendrás que implementar una actividad o un fragmento para interactuar con la base de datos a través de la clase `DatabaseHelper`.
+* Puedes agregar más atributos a los modelos `Cliente` y `Producto` según tus necesidades.
+* Puedes crear otras tablas en la base de datos si necesitas almacenar más información.
+
+Con este código completo, tienes una base sólida para implementar un sistema de gestión de clientes y productos en tu aplicación Android.
+
+
