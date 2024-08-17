@@ -1,5 +1,553 @@
 ---
-sidebar_position: 1
-draft: true
+sidebar_position: 3
+draft: false
 slug: /semana3
 ---
+
+# Semana 3
+
+## SQLite CRUD Parte 2
+
+Proyecto de Android Studio utilizando SQLite con buenas prácticas de Programación Orientada a Objetos (POO) en Java. 
+
+### Estructura del proyecto
+
+```bash
+com.example.myapp/
+├── data/
+│   ├── db/
+│   │   ├── DatabaseHelper.java
+│   │   └── DatabaseManager.java
+│   ├── dao/
+│   │   ├── UserDao.java
+│   │   └── ProductDao.java
+│   └── model/
+│       ├── User.java
+│       └── Product.java│   
+├── util/│
+│   └── Constants.java
+└── MainActivity.java
+```
+
+Esta organización es una buena práctica en el desarrollo de Android, ya que separa las responsabilidades y mejora la mantenibilidad del código.
+
+Desglose de cada componente:
+
+1.  Paquete raíz `com.example.myapp/`: Este es el paquete base de tu aplicación. Todos los demás paquetes y clases estarán contenidos dentro de este.
+2.  Paquete `data/`: Este paquete contiene todas las clases relacionadas con el manejo de datos en tu aplicación. Se divide en tres subpaquetes: 
+    - `db/`: Contiene clases relacionadas con la base de datos.
+            -   `DatabaseHelper.java`: Esta clase generalmente extiende `SQLiteOpenHelper` y se encarga de crear y actualizar la estructura de la base de datos.
+            -   `DatabaseManager.java`: Esta clase maneja la conexión a la base de datos y proporciona métodos para abrir y cerrar la conexión.
+
+    - `dao/`: Data Access Object (DAO) - Contiene clases que manejan las operaciones CRUD para cada entidad.
+            -   `UserDao.java`: Maneja las operaciones de base de datos relacionadas con la entidad User.
+            -   `ProductDao.java`: Maneja las operaciones de base de datos relacionadas con la entidad Product.
+
+    - `model/`: Contiene las clases de modelo que representan las entidades de tu aplicación.
+            -   `User.java`: Representa la entidad User con sus propiedades y métodos.
+            -   `Product.java`: Representa la entidad Product con sus propiedades y métodos.
+
+3.  Paquete `util/`: Este paquete contiene clases de utilidad que pueden ser usadas en toda la aplicación.
+    -   `Constants.java`: Almacena constantes que se utilizan en toda la aplicación, como nombres de tablas, columnas, etc.
+4.  `MainActivity.java`: Esta es la actividad principal de tu aplicación. Normalmente, es el punto de entrada de tu app y maneja la navegación principal.
+
+Beneficios de esta estructura:
+
+1.  Separación de responsabilidades: Cada clase y paquete tiene un propósito claro y específico.
+2.  Mantenibilidad: Es fácil encontrar y modificar código relacionado con una funcionalidad específica.
+3.  Escalabilidad: Puedes agregar fácilmente nuevas entidades o funcionalidades siguiendo la misma estructura.
+4.  Testabilidad: La separación clara de responsabilidades facilita la escritura de pruebas unitarias.
+5.  Colaboración: En proyectos más grandes, diferentes desarrolladores pueden trabajar en diferentes partes del código sin conflictos.
+6.  Claridad: La estructura del proyecto comunica claramente la arquitectura de la aplicación a otros desarrolladores.
+
+
+Ahora, vamos a implementar cada uno de estos archivos:
+
+### Models 
+#### (package com.example.myapp.model)
+
+```java title="User.java"
+public class User {
+    private long id;
+    private String username;
+    private String email;
+
+    public User() {
+
+    }
+
+    public User(String username, String email) {
+        this.username = username;
+        this.email = email;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
+```
+
+```java title="Product.java"
+public class Product {
+    private long id;
+    private String name;
+    private double price;
+
+    public Product() {
+
+    }
+
+    public Product(String name, double price) {
+        this.name = name;
+        this.price = price;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+}
+```
+### Database 
+#### (package com.example.myapp.db)
+
+```java title="DatabaseHelper.java"
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import com.example.myapp.util.Constants;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+    public DatabaseHelper(Context context) {
+        super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(Constants.CREATE_USER_TABLE);
+        db.execSQL(Constants.CREATE_PRODUCT_TABLE);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + Constants.TABLE_USER);
+        db.execSQL("DROP TABLE IF EXISTS " + Constants.TABLE_PRODUCT);
+        onCreate(db);
+    }
+}
+```
+```java title="DatabaseManager.java"
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+
+public class DatabaseManager {
+    private static DatabaseManager instance;
+    private DatabaseHelper databaseHelper;
+    private SQLiteDatabase database;
+
+    private DatabaseManager(Context context) {
+        databaseHelper = new DatabaseHelper(context);
+    }
+
+    public static synchronized DatabaseManager getInstance(Context context) {
+        if (instance == null) {
+            instance = new DatabaseManager(context.getApplicationContext());
+        }
+        return instance;
+    }
+
+    public SQLiteDatabase openDatabase() {
+        if (database == null || !database.isOpen()) {
+            database = databaseHelper.getWritableDatabase();
+        }
+        return database;
+    }
+
+    public void closeDatabase() {
+        if (database != null && database.isOpen()) {
+            database.close();
+        }
+    }
+}
+```
+
+### DAOs 
+#### (package com.example.myapp.dao)
+
+```java title="UserDao.java"
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.example.myapp.data.model.User;
+import com.example.myapp.util.Constants;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class UserDao {
+    private SQLiteDatabase database;
+
+    public UserDao(SQLiteDatabase database) {
+        this.database = database;
+    }
+
+    // Create
+    public long insert(User user) {
+        ContentValues values = new ContentValues();
+        values.put(Constants.COLUMN_USERNAME, user.getUsername());
+        values.put(Constants.COLUMN_EMAIL, user.getEmail());
+        return database.insert(Constants.TABLE_USER, null, values);
+    }
+
+    // Read
+    public User getUserById(long id) {
+        Cursor cursor = database.query(Constants.TABLE_USER, null,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(id)},
+                null, null, null);
+        User user = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            user = new User();
+            int idIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_ID);
+            int usernameIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_USERNAME);
+            int emailIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_EMAIL);
+
+            user.setId(cursor.getLong(idIndex));
+            user.setUsername(cursor.getString(usernameIndex));
+            user.setEmail(cursor.getString(emailIndex));
+            cursor.close();
+        }
+        return user;
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        Cursor cursor = database.query(Constants.TABLE_USER, null, null, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_ID);
+            int usernameIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_USERNAME);
+            int emailIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_EMAIL);
+
+            do {
+                User user = new User();
+                user.setId(cursor.getLong(idIndex));
+                user.setUsername(cursor.getString(usernameIndex));
+                user.setEmail(cursor.getString(emailIndex));
+                users.add(user);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return users;
+    }
+
+    // Update
+    public int update(User user) {
+        ContentValues values = new ContentValues();
+        values.put(Constants.COLUMN_USERNAME, user.getUsername());
+        values.put(Constants.COLUMN_EMAIL, user.getEmail());
+        return database.update(Constants.TABLE_USER, values,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(user.getId())});
+    }
+
+    // Delete
+    public int delete(long id) {
+        return database.delete(Constants.TABLE_USER,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    public void deleteAllUsers() {
+        database.delete(Constants.TABLE_USER, null, null);
+    }
+}
+```
+
+```java title="ProductDao.java"
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.example.myapp.data.model.Product;
+import com.example.myapp.util.Constants;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProductDao {
+    private SQLiteDatabase database;
+
+    public ProductDao(SQLiteDatabase database) {
+        this.database = database;
+    }
+
+    // Create
+    public long insert(Product product) {
+        ContentValues values = new ContentValues();
+        values.put(Constants.COLUMN_NAME, product.getName());
+        values.put(Constants.COLUMN_PRICE, product.getPrice());
+        return database.insert(Constants.TABLE_PRODUCT, null, values);
+    }
+
+    // Read
+    public Product getProductById(long id) {
+        Cursor cursor = database.query(Constants.TABLE_PRODUCT, null,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(id)},
+                null, null, null);
+        Product product = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            product = new Product();
+            int idIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_ID);
+            int nameIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_NAME);
+            int priceIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_PRICE);
+
+            product.setId(cursor.getLong(idIndex));
+            product.setName(cursor.getString(nameIndex));
+            product.setPrice(cursor.getDouble(priceIndex));
+            cursor.close();
+        }
+        return product;
+    }
+
+    public List<Product> getAllProducts() {
+        List<Product> products = new ArrayList<>();
+        Cursor cursor = database.query(Constants.TABLE_PRODUCT, null, null, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_ID);
+            int nameIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_NAME);
+            int priceIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_PRICE);
+
+            do {
+                Product product = new Product();
+                product.setId(cursor.getLong(idIndex));
+                product.setName(cursor.getString(nameIndex));
+                product.setPrice(cursor.getDouble(priceIndex));
+                products.add(product);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return products;
+    }
+
+    // Update
+    public int update(Product product) {
+        ContentValues values = new ContentValues();
+        values.put(Constants.COLUMN_NAME, product.getName());
+        values.put(Constants.COLUMN_PRICE, product.getPrice());
+        return database.update(Constants.TABLE_PRODUCT, values,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(product.getId())});
+    }
+
+    // Delete
+    public int delete(long id) {
+        return database.delete(Constants.TABLE_PRODUCT,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    public void deleteAllProducts() {
+        database.delete(Constants.TABLE_PRODUCT, null, null);
+    }
+}
+```
+
+### Constants 
+#### (package com.example.myapp.util)
+
+```java title="UserDao.java"
+public class Constants {
+    public static final String DATABASE_NAME = "myapp.db";
+    public static final int DATABASE_VERSION = 1;
+
+    public static final String TABLE_USER = "users";
+    public static final String TABLE_PRODUCT = "products";
+
+    public static final String COLUMN_ID = "id";
+    public static final String COLUMN_USERNAME = "username";
+    public static final String COLUMN_EMAIL = "email";
+    public static final String COLUMN_NAME = "name";
+    public static final String COLUMN_PRICE = "price";
+
+    public static final String CREATE_USER_TABLE = "CREATE TABLE " + TABLE_USER + "("
+            + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + COLUMN_USERNAME + " TEXT,"
+            + COLUMN_EMAIL + " TEXT"
+            + ")";
+
+    public static final String CREATE_PRODUCT_TABLE = "CREATE TABLE " + TABLE_PRODUCT + "("
+            + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + COLUMN_NAME + " TEXT,"
+            + COLUMN_PRICE + " REAL"
+            + ")";
+}
+```
+
+## Ejemplo de uso
+
+```java title="MainActivity.java"
+import android.os.Bundle;
+import android.util.Log;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.example.sqlitepoov1.data.dao.ProductDao;
+import com.example.sqlitepoov1.data.dao.UserDao;
+import com.example.sqlitepoov1.data.db.DatabaseManager;
+import com.example.sqlitepoov1.data.model.Product;
+import com.example.sqlitepoov1.data.model.User;
+
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "OUT1";
+    DatabaseManager dbManager;
+    private UserDao userDao;
+    private ProductDao productDao;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        DatabaseManager dbManager = DatabaseManager.getInstance(this);
+        userDao = new UserDao(dbManager.openDatabase());
+        productDao = new ProductDao(dbManager.openDatabase());
+
+        // Ejemplo de uso de UserDao
+        exampleUserCrud();
+
+        // Ejemplo de uso de ProductDao
+        exampleProductCrud();
+    }
+
+
+    private void exampleUserCrud() {
+        // CREATE - Insertar 3 usuarios colombianos
+        User user1 = new User("Carlos Rodríguez", "carlos.rodriguez@gmail.com");
+        User user2 = new User("María López", "maria.lopez@hotmail.com");
+        User user3 = new User("Andrés Gómez", "andres.gomez@outlook.com");
+
+        long userId1 = userDao.insert(user1);
+        long userId2 = userDao.insert(user2);
+        long userId3 = userDao.insert(user3);
+
+        Log.d(TAG, "Insertados usuarios con IDs: " + userId1 + ", " + userId2 + ", " + userId3);
+
+        // READ - Obtener todos los usuarios
+        List<User> allUsers = userDao.getAllUsers();
+        for (User user : allUsers) {
+            Log.d(TAG, "Usuario: " + user.getUsername() + ", Correo: " + user.getEmail());
+        }
+
+        // UPDATE - Actualizar el segundo usuario
+        User userToUpdate = userDao.getUserById(userId2);
+        if (userToUpdate != null) {
+            userToUpdate.setEmail("maria.lopez.nueva@gmail.com");
+            int updatedRows = userDao.update(userToUpdate);
+            Log.d(TAG, "Actualizados " + updatedRows + " usuario(s)");
+        }
+
+        // DELETE - Eliminar el tercer usuario
+        int deletedRows = userDao.delete(userId3);
+        Log.d(TAG, "Eliminados " + deletedRows + " usuario(s)");
+
+        // READ - Obtener todos los usuarios nuevamente para verificar los cambios
+        allUsers = userDao.getAllUsers();
+        for (User user : allUsers) {
+            Log.d(TAG, "Después de operaciones - Usuario: " + user.getUsername() + ", Correo: " + user.getEmail());
+        }
+    }
+
+    private void exampleProductCrud() {
+        // CREATE - Insertar 3 productos típicos colombianos
+        Product product1 = new Product("Café Juan Valdez", 25000);  // Precio en pesos colombianos
+        Product product2 = new Product("Arepa de chócolo", 3500);
+        Product product3 = new Product("Sombrero vueltiao", 80000);
+
+        long productId1 = productDao.insert(product1);
+        long productId2 = productDao.insert(product2);
+        long productId3 = productDao.insert(product3);
+
+        Log.d(TAG, "Insertados productos con IDs: " + productId1 + ", " + productId2 + ", " + productId3);
+
+        // READ - Obtener todos los productos
+        List<Product> allProducts = productDao.getAllProducts();
+        for (Product product : allProducts) {
+            Log.d(TAG, "Producto: " + product.getName() + ", Precio: $" + product.getPrice() + " COP");
+        }
+
+        // UPDATE - Actualizar el segundo producto
+        Product productToUpdate = productDao.getProductById(productId2);
+        if (productToUpdate != null) {
+            productToUpdate.setPrice(4000);  // Actualizar precio
+            int updatedRows = productDao.update(productToUpdate);
+            Log.d(TAG, "Actualizados " + updatedRows + " producto(s)");
+        }
+
+        // DELETE - Eliminar el tercer producto
+        int deletedRows = productDao.delete(productId3);
+        Log.d(TAG, "Eliminados " + deletedRows + " producto(s)");
+
+        // READ - Obtener todos los productos nuevamente para verificar los cambios
+        allProducts = productDao.getAllProducts();
+        for (Product product : allProducts) {
+            Log.d(TAG, "Después de operaciones - Producto: " + product.getName() + ", Precio: $" + product.getPrice() + " COP");
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dbManager.closeDatabase();
+    }
+}
+```
+
