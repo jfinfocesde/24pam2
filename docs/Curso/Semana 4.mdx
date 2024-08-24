@@ -496,3 +496,59 @@ Dentro de la etiqueta `<manifest>`, agrega la siguiente etiqueta:
     * En el método onBindViewHolder se establecen los datos de cada elemento en las vistas del ViewHolder. Se usa Glide para cargar la imagen de la URL proporcionada en el atributo imageUrl.
     * En el método getItemCount se devuelve el número total de elementos en la lista de usuarios.
     * Se agrega un click listener a cada elemento del RecyclerView para mostrar un Toast con el nombre del usuario.
+
+## Repositorio
+
+Proyecto Android Studio
+
+```bash
+git clone https://github.com/jfinfocesde/-pam2-sqlitep4.git
+```
+
+## Actividad de clase
+
+### Reciclador Básico de Nombres
+
+**Objetivo:** Crear una lista de nombres usando RecyclerView y mostrarlos en la pantalla.
+
+**Pasos:**
+
+1. **Crear un nuevo proyecto Android Studio:**
+    - Selecciona "Empty Compose Activity" o "Empty Activity".
+    - Elige un nombre de paquete y actividad.
+
+2. **Diseñar el Layout:**
+    - Crea un archivo de layout XML para la actividad principal.
+    - Agrega un RecyclerView al layout.
+    - Define las propiedades básicas del RecyclerView (id, layout_width, layout_height).  
+
+3. **Crear la clase de datos:**
+    - Crea una clase Java llamada "Nombre" (o similar).
+    - Agrega un atributo de tipo String llamado "nombre".
+    - Define el constructor y el getter para el atributo "nombre".
+
+4. **Crear la clase del adaptador:**
+    - Crea una clase Java que extienda RecyclerView.Adapter.
+    - Define un constructor que reciba una lista de objetos "Nombre".
+    - Define los métodos:
+        - `onCreateViewHolder`: Infla el layout del item y crea un ViewHolder.
+        - `onBindViewHolder`: Configura el ViewHolder con los datos del item.
+        - `getItemCount`: Retorna el tamaño de la lista de nombres.
+
+5. **Crear el layout del item:**
+    - Crea un archivo de layout XML para el item de la lista.
+    - Agrega un TextView al layout para mostrar el nombre.
+    - Define las propiedades básicas del TextView (id, layout_width, layout_height, etc.).
+
+6. **Crear el ViewHolder:**
+    - Crea una clase Java que extienda RecyclerView.ViewHolder.
+    - Define un constructor que reciba la vista del item.
+    - Define las referencias a los elementos del layout del item (TextView en este caso).
+
+7. **Configurar el RecyclerView en la actividad:**
+    - Crea una lista de objetos "Nombre".
+    - Crea una instancia del adaptador y pásale la lista de nombres.
+    - Asocia el adaptador al RecyclerView usando el método `setAdapter()`.
+
+8. **Probar la aplicación:**
+    - Ejecuta la aplicación y observa la lista de nombres en el RecyclerView.
