@@ -1,5 +1,498 @@
 ---
 sidebar_position: 4
-draft: true
+draft: false
 slug: /semana4
 ---
+
+# Semana 4
+
+## SQLite CRUD Parte 3
+
+## RecyclerView en Java Android
+
+**¿Qué es RecyclerView?**
+
+RecyclerView es un componente de la interfaz de usuario de Android que proporciona una forma eficiente de mostrar listas de datos. Es una mejora de ListView y GridView, ya que ofrece un mayor rendimiento y flexibilidad. 
+
+**Ventajas de RecyclerView:**
+
+* **Rendimiento óptimo:** RecyclerView solo renderiza los elementos visibles en la pantalla, ahorrando recursos y mejorando la fluidez.
+* **Flexibilidad:** Permite personalizar la apariencia de los elementos de la lista, incluyendo diferentes diseños para cada elemento.
+* **Manejo de datos eficiente:** Soporta diferentes tipos de datos y permite la actualización de datos de forma eficiente.
+* **Integración con diferentes patrones de diseño:** Soporta patrones como ViewHolder y Adapter, facilitando la gestión de datos y la renderización de la lista.
+
+**Estructura básica de RecyclerView:**
+
+1. **Data Source:** La fuente de datos de la lista, puede ser un ArrayList, un LiveData o cualquier otra colección de datos.
+2. **Adapter:** La clase que conecta el Data Source con el RecyclerView. Es responsable de crear, actualizar y mostrar los elementos de la lista.
+3. **ViewHolder:** La clase que contiene las referencias a las vistas de cada elemento de la lista. Es responsable de la renderización de cada elemento.
+4. **Layout Manager:** Define el diseño de la lista, como una lista lineal, una cuadrícula o un diseño personalizado.
+5. **RecyclerView:** El contenedor que gestiona el diseño y la renderización de la lista.
+
+**Ejemplo completo de RecyclerView:**
+
+El código crea una aplicación Android simple que muestra una lista de elementos en un RecyclerView. La actividad principal inicializa una lista de datos con cinco elementos de texto y crea un RecyclerView con un adaptador. El adaptador, MyAdapter, se encarga de mostrar cada elemento en el RecyclerView, utilizando un diseño definido en el archivo item_layout.xml. El diseño del elemento consiste en un TextView que muestra el texto de cada elemento. En resumen, la aplicación lee los datos de una lista, los procesa para mostrarlos en un formato específico dentro de cada elemento y los organiza en una lista visible en pantalla mediante el RecyclerView.
+
+### MainActivity.java
+
+```java
+import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
+
+    private RecyclerView recyclerView;
+    private MyAdapter adapter;
+    private List<String> data;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Inicializar la lista de datos
+        data = new ArrayList<>();
+        data.add("Elemento 1");
+        data.add("Elemento 2");
+        data.add("Elemento 3");
+        data.add("Elemento 4");
+        data.add("Elemento 5");
+
+        // Inicializar RecyclerView y Adapter
+        recyclerView = findViewById(R.id.recyclerView);
+        adapter = new MyAdapter(data);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+}
+```
+### activity_main.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+### MyAdapter.java
+
+```java
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.List;
+
+public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
+
+    private List<String> data;
+
+    public MyAdapter(List<String> data) {
+        this.data = data;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_layout, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        String item = data.get(position);
+        holder.textView.setText(item);
+    }
+
+    @Override
+    public int getItemCount() {
+        return data.size();
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView textView;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            textView = itemView.findViewById(R.id.textView);
+        }
+    }
+}
+```
+
+### item_layout.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Item"
+        android:textSize="18sp" />
+
+</LinearLayout>
+```
+
+**Explicación:**
+
+* **MainActivity.java:**  Contiene la lógica principal de la actividad, donde se inicializan los datos, el RecyclerView y el adaptador.
+* **MyAdapter.java:**  Es el adaptador que se encarga de mostrar los datos en el RecyclerView. Se define el ViewHolder para mantener la referencia al TextView dentro de cada elemento del RecyclerView.
+* **item_layout.xml:** Este es el archivo de diseño para cada elemento del RecyclerView. Define un TextView para mostrar el texto del elemento.
+
+**Pasos para usar el código:**
+
+1. **Crear un nuevo proyecto en Android Studio.**
+2. **Copiar el código en los archivos correspondientes (MainActivity.java, MyAdapter.java, item_layout.xml).**
+3. **Ejecutar la aplicación.**
+
+Al ejecutar la aplicación, se mostrará una lista de los elementos definidos en la lista de datos (data) en el RecyclerView.
+
+## Repositorio
+
+Proyecto Android Studio
+
+```bash
+git clone https://github.com/jfinfocesde/p-pam2-sqlitep3.git
+```
+
+
+## Ejemplo de RecyclerView con lista de usuarios (imagen, nombre, email)
+
+Este ejemplo muestra cómo usar RecyclerView para mostrar una lista de usuarios con imagen, nombre y email. La imagen se obtiene de una URL proporcionada en la data.
+
+### Modelo (User.java)
+
+```java
+package com.example.sqlitep4;
+
+public class User {
+    private String name;
+    private String email;
+    private String imageUrl;
+
+    // Constructor, getters y setters
+
+    public User() {
+    }
+
+    public User(String name, String email, String imageUrl) {
+        this.name = name;
+        this.email = email;
+        this.imageUrl = imageUrl;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+}
+```
+
+### Layout del elemento de la lista (item_user.xml)
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardCornerRadius="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <ImageView
+            android:id="@+id/userImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginEnd="10dp"
+            android:scaleType="centerCrop" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/userName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nombre del usuario"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/userEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="correo@ejemplo.com" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
+```
+
+### Activity principal (MainActivity.java)
+
+```java
+package com.example.sqlitep4;
+
+import android.os.Bundle;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
+
+    private RecyclerView recyclerView;
+    private UserAdapter adapter;
+    private List<User> userList;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        // Inicializar la lista de usuarios
+        userList = new ArrayList<>();
+        userList.add(new User("Nombre 1", "correo1@ejemplo.com", "https://icons.iconarchive.com/icons/custom-icon-design/pretty-office-2/72/man-icon.png"));
+        userList.add(new User("Nombre 2", "correo2@ejemplo.com", "https://icons.iconarchive.com/icons/icons-land/vista-people/72/Person-Male-Dark-icon.png"));
+        // ... añadir más usuarios
+
+        // Inicializar RecyclerView y Adapter
+        recyclerView = findViewById(R.id.recyclerView);
+        adapter = new UserAdapter(userList);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+}
+```
+
+### Adaptador (UserAdapter.java)
+
+```java
+package com.example.sqlitep4;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+
+import java.util.List;
+
+public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder>{
+    private List<User> users;
+
+    public UserAdapter(List<User> users) {
+        this.users = users;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_user, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        User user = users.get(position);
+        holder.userName.setText(user.getName());
+        holder.userEmail.setText(user.getEmail());
+        Glide.with(holder.itemView.getContext())
+                .load(user.getImageUrl())
+                .centerCrop()
+                .into(holder.userImage);
+    }
+
+    @Override
+    public int getItemCount() {
+        return users.size();
+    }
+
+    // Clase ViewHolder
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        public ImageView userImage;
+        public TextView userName;
+        public TextView userEmail;
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+            userImage = itemView.findViewById(R.id.userImage);
+            userName = itemView.findViewById(R.id.userName);
+            userEmail = itemView.findViewById(R.id.userEmail);
+
+            // Agregar click listener a cada elemento
+            itemView.setOnClickListener(v -> {
+                int position = getAdapterPosition();
+                if (position != RecyclerView.NO_POSITION) {
+                    User user = users.get(position);
+                    Toast.makeText(v.getContext(), "Usuario: " + user.getName(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+}
+```
+
+### Dependencia de Glide
+
+Asegúrese de agregar la dependencia de Glide a su proyecto:
+
+```gradle
+implementation ("com.github.bumptech.glide:glide:4.13.0")
+annotationProcessor ("com.github.bumptech.glide:compiler:4.13.0")
+```
+
+### Permiso (AndroidManifest.xml)
+
+Para usar el código que te proporcioné, necesitas agregar el permiso de internet a tu AndroidManifest.xml.  Esto es porque la app necesita acceder a internet para cargar las imágenes desde las URLs.
+
+**1. Abre el archivo AndroidManifest.xml:**
+
+En tu proyecto de Android Studio, abre el archivo `AndroidManifest.xml`. 
+
+**2. Agrega la etiqueta `<uses-permission>`:**
+
+Dentro de la etiqueta `<manifest>`, agrega la siguiente etiqueta:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
+**AndroidManifest.xml completo (Ejemplo):**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.tuapp">  <!-- Reemplaza 'com.example.tuapp' con tu paquete -->
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <!-- Permiso de Internet -->
+        <uses-permission android:name="android.permission.INTERNET" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
+```
+
+**Explicación:**
+
+* `<uses-permission>`: Esta etiqueta declara un permiso que tu aplicación necesita para funcionar.
+* `android:name="android.permission.INTERNET"`: Especifica el permiso de internet, que permite a tu aplicación acceder a internet.
+
+
+**Explicacion del código:**
+
+* **Data:** Se define una clase User que contiene los campos name, email e imageUrl.
+* **Layout del elemento de la lista:** Se crea un layout (item_user.xml) que contiene un ImageView para la imagen, un TextView para el nombre y otro para el email.
+* **Activity principal:**
+    * Se crea una lista de User y se añade algunos datos de prueba.
+    * Se instancia el RecyclerView y el Adapter.
+    * Se establece el LayoutManager (LinearLayoutManager) para el RecyclerView.
+    * Se instancia el Adapter con la lista de usuarios.
+    * Se establece el adapter en el RecyclerView.
+* **Adapter:**
+    * Se implementa la clase UserAdapter que extiende RecyclerView.Adapter.
+    * Se crea una clase ViewHolder que contiene las referencias a las vistas del layout del elemento.
+    * En el método onCreateViewHolder se infla el layout del elemento y se crea una instancia de ViewHolder.
+    * En el método onBindViewHolder se establecen los datos de cada elemento en las vistas del ViewHolder. Se usa Glide para cargar la imagen de la URL proporcionada en el atributo imageUrl.
+    * En el método getItemCount se devuelve el número total de elementos en la lista de usuarios.
+    * Se agrega un click listener a cada elemento del RecyclerView para mostrar un Toast con el nombre del usuario.

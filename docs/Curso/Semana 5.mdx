@@ -3,3 +3,199 @@ sidebar_position: 5
 draft: true
 slug: /semana5
 ---
+
+## Ejemplo de RecyclerView con lista de usuarios (imagen, nombre, email)
+
+Este ejemplo muestra cómo usar RecyclerView para mostrar una lista de usuarios con imagen, nombre y email. La imagen se obtiene de una URL proporcionada en la data.
+
+**1. Data:**
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class User {
+    private String name;
+    private String email;
+    private String imageUrl;
+
+    // Constructor, getters y setters
+    // ...
+}
+```
+
+**2. Layout del elemento de la lista (item_user.xml):**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:cardCornerRadius="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <ImageView
+            android:id="@+id/userImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginEnd="10dp"
+            android:scaleType="centerCrop" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/userName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nombre del usuario"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/userEmail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="correo@ejemplo.com" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
+```
+
+**3. Activity principal (MainActivity.java):**
+
+```java
+import android.os.Bundle;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
+
+    private RecyclerView recyclerView;
+    private UserAdapter adapter;
+    private List<User> userList;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Inicializar la lista de usuarios
+        userList = new ArrayList<>();
+        userList.add(new User("Nombre 1", "correo1@ejemplo.com", "https://via.placeholder.com/150"));
+        userList.add(new User("Nombre 2", "correo2@ejemplo.com", "https://via.placeholder.com/150"));
+        // ... añadir más usuarios
+
+        // Inicializar RecyclerView y Adapter
+        recyclerView = findViewById(R.id.recyclerView);
+        adapter = new UserAdapter(userList);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    // Clase Adapter
+    public static class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
+
+        private List<User> users;
+
+        public UserAdapter(List<User> users) {
+            this.users = users;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_user, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            User user = users.get(position);
+            holder.userName.setText(user.getName());
+            holder.userEmail.setText(user.getEmail());
+            Glide.with(holder.itemView.getContext())
+                    .load(user.getImageUrl())
+                    .centerCrop()
+                    .into(holder.userImage);
+        }
+
+        @Override
+        public int getItemCount() {
+            return users.size();
+        }
+
+        // Clase ViewHolder
+        public class ViewHolder extends RecyclerView.ViewHolder {
+            public ImageView userImage;
+            public TextView userName;
+            public TextView userEmail;
+
+            public ViewHolder(View itemView) {
+                super(itemView);
+                userImage = itemView.findViewById(R.id.userImage);
+                userName = itemView.findViewById(R.id.userName);
+                userEmail = itemView.findViewById(R.id.userEmail);
+
+                // Agregar click listener a cada elemento
+                itemView.setOnClickListener(v -> {
+                    int position = getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        User user = users.get(position);
+                        Toast.makeText(v.getContext(), "Usuario: " + user.getName(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }
+    }
+}
+```
+
+**4. Dependencia de Glide:**
+
+Asegúrese de agregar la dependencia de Glide a su proyecto:
+
+```gradle
+implementation 'com.github.bumptech.glide:glide:4.13.0'
+annotationProcessor 'com.github.bumptech.glide:compiler:4.13.0'
+```
+
+**Explicacion del código:**
+
+* **Data:** Se define una clase User que contiene los campos name, email e imageUrl.
+* **Layout del elemento de la lista:** Se crea un layout (item_user.xml) que contiene un ImageView para la imagen, un TextView para el nombre y otro para el email.
+* **Activity principal:**
+    * Se crea una lista de User y se añade algunos datos de prueba.
+    * Se instancia el RecyclerView y el Adapter.
+    * Se establece el LayoutManager (LinearLayoutManager) para el RecyclerView.
+    * Se instancia el Adapter con la lista de usuarios.
+    * Se establece el adapter en el RecyclerView.
+* **Adapter:**
+    * Se implementa la clase UserAdapter que extiende RecyclerView.Adapter.
+    * Se crea una clase ViewHolder que contiene las referencias a las vistas del layout del elemento.
+    * En el método onCreateViewHolder se infla el layout del elemento y se crea una instancia de ViewHolder.
+    * En el método onBindViewHolder se establecen los datos de cada elemento en las vistas del ViewHolder. Se usa Glide para cargar la imagen de la URL proporcionada en el atributo imageUrl.
+    * En el método getItemCount se devuelve el número total de elementos en la lista de usuarios.
+    * Se agrega un click listener a cada elemento del RecyclerView para mostrar un Toast con el nombre del usuario.
