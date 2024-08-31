@@ -1,96 +1,431 @@
 ---
 sidebar_position: 5
-draft: true
+draft: false
 slug: /semana5
 ---
 
-## Ejemplo de RecyclerView con lista de usuarios (imagen, nombre, email)
+## Ejemplo completo utilizando el patrón de diseño DAO
 
-Este ejemplo muestra cómo usar RecyclerView para mostrar una lista de usuarios con imagen, nombre y email. La imagen se obtiene de una URL proporcionada en la data.
+Este código implementa una aplicación Android que utiliza el patrón de diseño DAO (Data Access Object) para manejar la persistencia de datos en una base de datos SQLite. La aplicación se centra en la gestión de usuarios y productos. Aquí hay una descripción general de sus principales componentes y funcionalidades:
 
-**1. Data:**
+1.  Estructura del proyecto: El código está organizado en varios paquetes, incluyendo adaptadores, DAOs, modelos de datos, helpers de base de datos y utilidades.
+2.  Modelo de datos: Define clases para User y Product, que representan las entidades principales de la aplicación.
+3.  Base de datos: Utiliza SQLite para almacenar datos localmente en el dispositivo. Incluye un DatabaseHelper para crear y actualizar la estructura de la base de datos, y un DatabaseManager para gestionar las conexiones.
+4.  DAOs: Implementa objetos de acceso a datos para Users y Products, proporcionando métodos CRUD (Crear, Leer, Actualizar, Eliminar) para cada entidad.
+5.  Adaptador: Incluye un UserAdapter para mostrar la lista de usuarios en un RecyclerView.
+6.  Actividad principal: MainActivity demuestra el uso de los DAOs, realizando operaciones CRUD en usuarios y productos, y muestra la lista de usuarios en un RecyclerView.
+7.  Constantes: Define constantes para nombres de tablas, columnas y consultas SQL.
+8.  Interfaz de usuario: Utiliza un RecyclerView para mostrar la lista de usuarios, con manejo de clics en los elementos de la lista.
+9.  Operaciones de ejemplo: Incluye métodos de ejemplo que demuestran cómo insertar, leer, actualizar y eliminar usuarios y productos.
+10.  Gestión de recursos: Cierra adecuadamente la conexión a la base de datos cuando la actividad se destruye.
+
+Esta aplicación proporciona una estructura robusta para manejar datos locales en una aplicación Android, demostrando buenas prácticas de desarrollo como la separación de preocupaciones, el uso de patrones de diseño, y una gestión eficiente de la base de datos SQLite.
+
+## Buenas Prácticas Implementadas
+
+1.  **Patrón DAO**: El uso del patrón DAO para separar la lógica de acceso a datos de la lógica de negocio es una excelente práctica.
+2.  **Estructura del Proyecto**: La organización en paquetes (adapter, dao, db, model, util) muestra una buena separación de responsabilidades.
+3.  **Constantes**: El uso de una clase Constants para almacenar valores constantes como nombres de tablas y columnas es una buena práctica.
+4.  **Singleton para DatabaseManager**: Implementar DatabaseManager como un singleton asegura una única instancia de la conexión a la base de datos.
+5.  **Manejo de Recursos**: El cierre de la base de datos en onDestroy() de MainActivity es una buena práctica para evitar fugas de memoria.
+6.  **RecyclerView con ViewHolder**: El uso de RecyclerView con el patrón ViewHolder para la lista de usuarios es eficiente y sigue las mejores prácticas de Android.
+7.  **Separación de Lógica**: La separación de las operaciones CRUD en métodos individuales en MainActivity (exampleUserCrud, exampleProductCrud) mejora la legibilidad.
+
+
+### Estructura del proyecto
+
+```bash
+com.example.myapp
+│   MainActivity.java
+│
+├───data
+│   ├───adapter
+│   │       UserAdapter.java
+│   │
+│   ├───dao
+│   │       ProductDao.java
+│   │       UserDao.java
+│   │
+│   ├───db
+│   │       DatabaseHelper.java
+│   │       DatabaseManager.java
+│   │
+│   └───model
+│           Product.java
+│           User.java
+│
+└───util
+        Constants.java
+```
+### UserAdapter 
+#### (package com.example.myapp.data.adapter)
 
 ```java
-import java.util.ArrayList;
-import java.util.List;
+package com.example.myapp.data.adapter;
 
-public class User {
-    private String name;
-    private String email;
-    private String imageUrl;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-    // Constructor, getters y setters
-    // ...
-}
-```
-
-**2. Layout del elemento de la lista (item_user.xml):**
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView 
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="5dp"
-    app:cardCornerRadius="8dp">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="10dp">
-
-        <ImageView
-            android:id="@+id/userImage"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginEnd="10dp"
-            android:scaleType="centerCrop" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/userName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nombre del usuario"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/userEmail"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="correo@ejemplo.com" />
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-</androidx.cardview.widget.CardView>
-```
-
-**3. Activity principal (MainActivity.java):**
-
-```java
-import android.os.Bundle;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.sqlitep2.R;
+import com.example.sqlitep2.data.model.User;
+
+import java.util.List;
+
+public class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
+    private List<User> users;
+
+    public UserAdapter(List<User> users) {
+        this.users = users;
+    }
+
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(User user);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public UserAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.user_layout, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull UserAdapter.ViewHolder holder, int position) {
+        User user = users.get(position);
+        holder.userName.setText(user.getUsername());
+        holder.userEmail.setText(user.getEmail());
+        Glide.with(holder.itemView.getContext())
+                .load(user.getImageUrl())
+                .centerCrop()
+                .into(holder.userImage);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(user);
+            }
+        });
+    }
+
+    @Override
+    public int getItemCount() {
+        return users.size();
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        public TextView userName;
+        public TextView userEmail;
+        public ImageView userImage;
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            userName = itemView.findViewById(R.id.userName);
+            userEmail = itemView.findViewById(R.id.userEmail);
+            userImage = itemView.findViewById(R.id.userImage);
+        }
+    }
+}
+```
+
+
+### Models 
+#### (package com.example.myapp.data.model)
+
+```java title="User.java"
+package com.example.myapp.data.model;
+
+public class User {
+    private long id;
+    private String username;
+    private String email;
+    private String imageUrl;
+
+    public User() {
+
+    }
+
+    public User(String username, String email, String imageUrl) {
+        this.username = username;
+        this.email = email;
+        this.imageUrl = imageUrl;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+}
+```
+
+### Database 
+#### (package com.example.myapp.data.db)
+
+```java title="DatabaseHelper.java"
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+import com.example.myapp.util.Constants;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+    public DatabaseHelper(Context context) {
+        super(context, Constants.DATABASE_NAME, null, Constants.DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(Constants.CREATE_USER_TABLE);
+        db.execSQL(Constants.CREATE_PRODUCT_TABLE);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + Constants.TABLE_USER);
+        db.execSQL("DROP TABLE IF EXISTS " + Constants.TABLE_PRODUCT);
+        onCreate(db);
+    }
+}
+```
+```java title="DatabaseManager.java"
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+
+public class DatabaseManager {
+    private static DatabaseManager instance;
+    private DatabaseHelper databaseHelper;
+    private SQLiteDatabase database;
+
+    private DatabaseManager(Context context) {
+        databaseHelper = new DatabaseHelper(context);
+    }
+
+    public static synchronized DatabaseManager getInstance(Context context) {
+        if (instance == null) {
+            instance = new DatabaseManager(context.getApplicationContext());
+        }
+        return instance;
+    }
+
+    public SQLiteDatabase openDatabase() {
+        if (database == null || !database.isOpen()) {
+            database = databaseHelper.getWritableDatabase();
+        }
+        return database;
+    }
+
+    public void closeDatabase() {
+        if (database != null && database.isOpen()) {
+            database.close();
+        }
+    }
+}
+```
+
+### DAOs 
+#### (package com.example.myapp.data.dao)
+
+```java title="UserDao.java"
+package com.example.myapp.data.dao;
+
+import android.content.ContentValues;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+import com.example.sqlitep2.data.model.User;
+import com.example.sqlitep2.util.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
 
+public class UserDao {
+    private SQLiteDatabase database;
+
+    public UserDao(SQLiteDatabase database) {
+        this.database = database;
+    }
+
+    // Create
+    public long insert(User user) {
+        ContentValues values = new ContentValues();
+        values.put(Constants.COLUMN_USERNAME, user.getUsername());
+        values.put(Constants.COLUMN_EMAIL, user.getEmail());
+        values.put(Constants.COLUMN_IMAGE, user.getImageUrl());
+        return database.insert(Constants.TABLE_USER, null, values);
+    }
+
+    // Read
+    public User getUserById(long id) {
+        Cursor cursor = database.query(Constants.TABLE_USER, null,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(id)},
+                null, null, null);
+        User user = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            user = new User();
+            int idIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_ID);
+            int usernameIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_USERNAME);
+            int emailIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_EMAIL);
+            int imageIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_IMAGE);
+
+            user.setId(cursor.getLong(idIndex));
+            user.setUsername(cursor.getString(usernameIndex));
+            user.setEmail(cursor.getString(emailIndex));
+            user.setImageUrl(cursor.getString(imageIndex));
+            cursor.close();
+        }
+        return user;
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        Cursor cursor = database.query(Constants.TABLE_USER, null, null, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_ID);
+            int usernameIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_USERNAME);
+            int emailIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_EMAIL);
+            int imageIndex = cursor.getColumnIndexOrThrow(Constants.COLUMN_IMAGE);
+
+            do {
+                User user = new User();
+                user.setId(cursor.getLong(idIndex));
+                user.setUsername(cursor.getString(usernameIndex));
+                user.setEmail(cursor.getString(emailIndex));
+                user.setImageUrl(cursor.getString(imageIndex));
+                users.add(user);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return users;
+    }
+
+    // Update
+    public int update(User user) {
+        ContentValues values = new ContentValues();
+        values.put(Constants.COLUMN_USERNAME, user.getUsername());
+        values.put(Constants.COLUMN_EMAIL, user.getEmail());
+        values.put(Constants.COLUMN_IMAGE, user.getImageUrl());
+        return database.update(Constants.TABLE_USER, values,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(user.getId())});
+    }
+
+    // Delete
+    public int delete(long id) {
+        return database.delete(Constants.TABLE_USER,
+                Constants.COLUMN_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    public void deleteAllUsers() {
+        database.delete(Constants.TABLE_USER, null, null);
+    }
+}
+```
+
+### Constants 
+#### (package com.example.myapp.util)
+
+```java title="UserDao.java"
+package com.example.myapp.util;
+
+public class Constants {
+    public static final String DATABASE_NAME = "myapp.db";
+    public static final int DATABASE_VERSION = 4;
+
+    public static final String TABLE_USER = "users";
+    public static final String TABLE_PRODUCT = "products";
+
+    public static final String COLUMN_ID = "id";
+    public static final String COLUMN_USERNAME = "username";
+    public static final String COLUMN_EMAIL = "email";
+    public static final String COLUMN_IMAGE = "image";
+    public static final String COLUMN_NAME = "name";
+    public static final String COLUMN_PRICE = "price";
+
+    public static final String CREATE_USER_TABLE = "CREATE TABLE " + TABLE_USER + "("
+            + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + COLUMN_USERNAME + " TEXT,"
+            + COLUMN_EMAIL + " TEXT,"
+            + COLUMN_IMAGE + " TEXT"
+            + ")";
+
+    public static final String CREATE_PRODUCT_TABLE = "CREATE TABLE " + TABLE_PRODUCT + "("
+            + COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + COLUMN_NAME + " TEXT,"
+            + COLUMN_PRICE + " REAL"
+            + ")";
+}
+```
+
+## Ejemplo de uso
+
+```java title="MainActivity.java"
+package com.example.myapp;
+
+import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.sqlitep2.data.adapter.UserAdapter;
+import com.example.sqlitep2.data.dao.ProductDao;
+import com.example.sqlitep2.data.dao.UserDao;
+import com.example.sqlitep2.data.db.DatabaseManager;
+import com.example.sqlitep2.data.model.Product;
+import com.example.sqlitep2.data.model.User;
+
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "OUT1";
+    DatabaseManager dbManager;
+    private UserDao userDao;
+    private ProductDao productDao;
 
     private RecyclerView recyclerView;
     private UserAdapter adapter;
@@ -99,103 +434,122 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
-        // Inicializar la lista de usuarios
-        userList = new ArrayList<>();
-        userList.add(new User("Nombre 1", "correo1@ejemplo.com", "https://via.placeholder.com/150"));
-        userList.add(new User("Nombre 2", "correo2@ejemplo.com", "https://via.placeholder.com/150"));
-        // ... añadir más usuarios
+        DatabaseManager dbManager = DatabaseManager.getInstance(this);
+        userDao = new UserDao(dbManager.openDatabase());
+        productDao = new ProductDao(dbManager.openDatabase());
 
-        // Inicializar RecyclerView y Adapter
+        // Ejemplo de uso de UserDao
+        exampleUserCrud();
+
+        List<User> allUsers = userDao.getAllUsers();
+
         recyclerView = findViewById(R.id.recyclerView);
-        adapter = new UserAdapter(userList);
+        adapter = new UserAdapter(allUsers);
+        adapter.setOnItemClickListener(user -> {
+            // Aquí manejas el clic del elemento
+            Toast.makeText(this, "Usuario seleccionado: " + user.getUsername(), Toast.LENGTH_SHORT).show();
+        });
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Ejemplo de uso de ProductDao
+        //exampleProductCrud();
     }
 
-    // Clase Adapter
-    public static class UserAdapter extends RecyclerView.Adapter<UserAdapter.ViewHolder> {
+    private void exampleUserCrud() {
+        // CREATE - Insertar 3 usuarios colombianos
+        User user1 = new User("Carlos Rodríguez", "carlos.rodriguez@gmail.com","https://icons.iconarchive.com/icons/icons-land/vista-people/72/Office-Customer-Male-Light-icon.png");
+        User user2 = new User("María López", "maria.lopez@hotmail.com", "https://icons.iconarchive.com/icons/custom-icon-design/pretty-office-2/72/man-icon.png");
+        User user3 = new User("Andrés Gómez", "andres.gomez@outlook.com", "https://icons.iconarchive.com/icons/hopstarter/sleek-xp-basic/72/Administrator-icon.png");
 
-        private List<User> users;
+        long userId1 = userDao.insert(user1);
+        long userId2 = userDao.insert(user2);
+        long userId3 = userDao.insert(user3);
 
-        public UserAdapter(List<User> users) {
-            this.users = users;
+        Log.d(TAG, "Insertados usuarios con IDs: " + userId1 + ", " + userId2 + ", " + userId3);
+
+        // READ - Obtener todos los usuarios
+        List<User> allUsers = userDao.getAllUsers();
+        for (User user : allUsers) {
+            Log.d(TAG, "Usuario: " + user.getUsername() + ", Correo: " + user.getEmail());
         }
 
-        @NonNull
-        @Override
-        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_user, parent, false);
-            return new ViewHolder(view);
+        // UPDATE - Actualizar el segundo usuario
+        User userToUpdate = userDao.getUserById(userId2);
+        if (userToUpdate != null) {
+            userToUpdate.setEmail("maria.lopez.nueva@gmail.com");
+            int updatedRows = userDao.update(userToUpdate);
+            Log.d(TAG, "Actualizados " + updatedRows + " usuario(s)");
         }
 
-        @Override
-        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            User user = users.get(position);
-            holder.userName.setText(user.getName());
-            holder.userEmail.setText(user.getEmail());
-            Glide.with(holder.itemView.getContext())
-                    .load(user.getImageUrl())
-                    .centerCrop()
-                    .into(holder.userImage);
+        // DELETE - Eliminar el tercer usuario
+        int deletedRows = userDao.delete(userId3);
+        Log.d(TAG, "Eliminados " + deletedRows + " usuario(s)");
+
+        // READ - Obtener todos los usuarios nuevamente para verificar los cambios
+        allUsers = userDao.getAllUsers();
+        for (User user : allUsers) {
+            Log.d(TAG, "Después de operaciones - Usuario: " + user.getUsername() + ", Correo: " + user.getEmail());
+        }
+    }
+
+    private void exampleProductCrud() {
+        // CREATE - Insertar 3 productos típicos colombianos
+        Product product1 = new Product("Café Juan Valdez", 25000);  // Precio en pesos colombianos
+        Product product2 = new Product("Arepa de chócolo", 3500);
+        Product product3 = new Product("Sombrero vueltiao", 80000);
+
+        long productId1 = productDao.insert(product1);
+        long productId2 = productDao.insert(product2);
+        long productId3 = productDao.insert(product3);
+
+        Log.d(TAG, "Insertados productos con IDs: " + productId1 + ", " + productId2 + ", " + productId3);
+
+        // READ - Obtener todos los productos
+        List<Product> allProducts = productDao.getAllProducts();
+        for (Product product : allProducts) {
+            Log.d(TAG, "Producto: " + product.getName() + ", Precio: $" + product.getPrice() + " COP");
         }
 
-        @Override
-        public int getItemCount() {
-            return users.size();
+        // UPDATE - Actualizar el segundo producto
+        Product productToUpdate = productDao.getProductById(productId2);
+        if (productToUpdate != null) {
+            productToUpdate.setPrice(4000);  // Actualizar precio
+            int updatedRows = productDao.update(productToUpdate);
+            Log.d(TAG, "Actualizados " + updatedRows + " producto(s)");
         }
 
-        // Clase ViewHolder
-        public class ViewHolder extends RecyclerView.ViewHolder {
-            public ImageView userImage;
-            public TextView userName;
-            public TextView userEmail;
+        // DELETE - Eliminar el tercer producto
+        int deletedRows = productDao.delete(productId3);
+        Log.d(TAG, "Eliminados " + deletedRows + " producto(s)");
 
-            public ViewHolder(View itemView) {
-                super(itemView);
-                userImage = itemView.findViewById(R.id.userImage);
-                userName = itemView.findViewById(R.id.userName);
-                userEmail = itemView.findViewById(R.id.userEmail);
-
-                // Agregar click listener a cada elemento
-                itemView.setOnClickListener(v -> {
-                    int position = getAdapterPosition();
-                    if (position != RecyclerView.NO_POSITION) {
-                        User user = users.get(position);
-                        Toast.makeText(v.getContext(), "Usuario: " + user.getName(), Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
+        // READ - Obtener todos los productos nuevamente para verificar los cambios
+        allProducts = productDao.getAllProducts();
+        for (Product product : allProducts) {
+            Log.d(TAG, "Después de operaciones - Producto: " + product.getName() + ", Precio: $" + product.getPrice() + " COP");
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dbManager.closeDatabase();
     }
 }
 ```
 
-**4. Dependencia de Glide:**
+## Repositorio
 
-Asegúrese de agregar la dependencia de Glide a su proyecto:
+Proyecto Android Studio
 
-```gradle
-implementation 'com.github.bumptech.glide:glide:4.13.0'
-annotationProcessor 'com.github.bumptech.glide:compiler:4.13.0'
+```bash
+git clone https://github.com/jfinfocesde/p-pam2-sqlitep5.git
 ```
-
-**Explicacion del código:**
-
-* **Data:** Se define una clase User que contiene los campos name, email e imageUrl.
-* **Layout del elemento de la lista:** Se crea un layout (item_user.xml) que contiene un ImageView para la imagen, un TextView para el nombre y otro para el email.
-* **Activity principal:**
-    * Se crea una lista de User y se añade algunos datos de prueba.
-    * Se instancia el RecyclerView y el Adapter.
-    * Se establece el LayoutManager (LinearLayoutManager) para el RecyclerView.
-    * Se instancia el Adapter con la lista de usuarios.
-    * Se establece el adapter en el RecyclerView.
-* **Adapter:**
-    * Se implementa la clase UserAdapter que extiende RecyclerView.Adapter.
-    * Se crea una clase ViewHolder que contiene las referencias a las vistas del layout del elemento.
-    * En el método onCreateViewHolder se infla el layout del elemento y se crea una instancia de ViewHolder.
-    * En el método onBindViewHolder se establecen los datos de cada elemento en las vistas del ViewHolder. Se usa Glide para cargar la imagen de la URL proporcionada en el atributo imageUrl.
-    * En el método getItemCount se devuelve el número total de elementos en la lista de usuarios.
-    * Se agrega un click listener a cada elemento del RecyclerView para mostrar un Toast con el nombre del usuario.

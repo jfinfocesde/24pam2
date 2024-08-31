@@ -64,7 +64,7 @@ Beneficios de esta estructura:
 Ahora, vamos a implementar cada uno de estos archivos:
 
 ### Models 
-#### (package com.example.myapp.model)
+#### (package com.example.myapp.data.model)
 
 ```java title="User.java"
 public class User {
@@ -148,7 +148,7 @@ public class Product {
 }
 ```
 ### Database 
-#### (package com.example.myapp.db)
+#### (package com.example.myapp.data.db)
 
 ```java title="DatabaseHelper.java"
 import android.content.Context;
@@ -212,7 +212,7 @@ public class DatabaseManager {
 ```
 
 ### DAOs 
-#### (package com.example.myapp.dao)
+#### (package com.example.myapp.data.dao)
 
 ```java title="UserDao.java"
 import android.content.ContentValues;
