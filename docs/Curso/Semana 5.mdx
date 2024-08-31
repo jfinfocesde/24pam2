@@ -553,3 +553,38 @@ Proyecto Android Studio
 ```bash
 git clone https://github.com/jfinfocesde/p-pam2-sqlitep5.git
 ```
+
+
+## Proyecto Integrador (Avance): Aplicación de Android con SQLite y DAO
+
+**Objetivo:** Desarrollar una aplicación de Android utilizando Android Studio, SQLite y el patrón de diseño DAO para gestionar usuarios y productos.
+
+**Requisitos:**
+
+* **ActivityMain:**
+    * Contendrá 4 botones con las siguientes funciones:
+        * **Botón 1 (Crear Usuario):** Inicia la actividad `CreateUserActivity`.
+        * **Botón 2 (Listar Usuarios):** Inicia la actividad `ListUserActivity`.
+        * **Botón 3 (Crear Producto):** Inicia la actividad `CreateProductActivity`.
+        * **Botón 4 (Listar Productos):** Inicia la actividad `ListProductActivity`.
+* **CreateUserActivity:**
+    * Contiene widgets para ingresar los campos del modelo `Usuario`.
+    * **Botón "Crear Usuario":** Guarda el nuevo usuario en la base de datos SQLite utilizando el DAO.
+    * **Botón "Regresar":** Vuelve a la actividad `ActivityMain`.
+* **ListUserActivity:**
+    * Utiliza un `RecyclerView` para mostrar la lista de usuarios almacenados en la base de datos.
+    * **Botón "Regresar":** Vuelve a la actividad `ActivityMain`.
+* **CreateProductActivity:**
+    * Similar a `CreateUserActivity`, pero para el modelo `Producto`.
+* **ListProductActivity:**
+    * Similar a `ListUserActivity`, pero para mostrar la lista de productos.
+
+**Implementación:**
+
+* Utilizar SQLite para almacenar la información de usuarios y productos.
+* Implementar el patrón de diseño DAO para la interacción con la base de datos.
+* Utilizar `RecyclerView` para mostrar listas de usuarios y productos.
+
+**Entrega:**
+
+* El proyecto se debe entregar en un repositorio colaborativo en GitHub, utilizando un "fork" del repositorio original.
