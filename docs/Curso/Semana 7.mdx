@@ -1,5 +1,674 @@
 ---
 sidebar_position: 7
-draft: true
+draft: false
 slug: /semana7
 ---
+
+## Aplicación CRUD SQLite en Java utilizando POO y el patrón DAO en Android Studio
+
+Este código implementa una sencilla aplicación Android que permite crear, leer, actualizar y eliminar usuarios usando SQLite como base de datos.  Las diferentes actividades se encargan de las siguientes funciones:
+
+### **1. `MainActivity`**
+
+* **`public class MainActivity extends AppCompatActivity`**:  Define la clase `MainActivity` que hereda de `AppCompatActivity`. Esta es la clase principal de tu aplicación, donde se inicia la actividad.
+* **`onCreate(Bundle savedInstanceState)`**: Es el método que se ejecuta cuando se crea la actividad. Aquí se realiza la inicialización de la actividad.
+* **`setContentView(R.layout.activity_main)`**: Establece el diseño (`layout`) de la actividad, en este caso, el archivo `activity_main.xml`.
+* **`btnUserList` y `btnUserCreate`**:  Declaración de botones para la lista de usuarios y para crear un nuevo usuario.
+* **`setOnClickListener`**: Se establecen listeners para ambos botones, lo que significa que se ejecutarán acciones específicas cuando se hagan clic en ellos.
+    * **`btnUserList`**: Lanza la actividad `UserListActivity` cuando se hace clic en él, mostrando la lista de usuarios.
+    * **`btnUserCreate`**: Lanza la actividad `UserCreateActivity` cuando se hace clic en él, permitiendo al usuario crear un nuevo usuario.
+
+
+```java 
+package com.example.sqlitep2;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.sqlitep2.data.adapter.UserAdapter;
+import com.example.sqlitep2.data.dao.ProductDao;
+import com.example.sqlitep2.data.dao.UserDao;
+import com.example.sqlitep2.data.db.DatabaseManager;
+import com.example.sqlitep2.data.model.Product;
+import com.example.sqlitep2.data.model.User;
+
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity {
+
+    private Button btnUserList, btnUserCreate;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        btnUserList = (Button) findViewById(R.id.btnUserList);
+        btnUserCreate = (Button) findViewById(R.id.btnUserCreate);
+
+        btnUserList.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, UserListActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        btnUserCreate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, UserCreateActivity.class);
+                startActivity(intent);
+            }
+        });
+    }
+}
+```
+
+
+### **2. `UserCreateActivity`**
+
+* **`public class UserCreateActivity extends AppCompatActivity`**: Define la clase `UserCreateActivity` que hereda de `AppCompatActivity`.
+* **`onCreate(Bundle savedInstanceState)`**: Es el método que se ejecuta cuando se crea la actividad.
+* **`setContentView(R.layout.activity_user_create)`**: Establece el diseño (`layout`) de la actividad, en este caso, el archivo `activity_user_create.xml`.
+* **`editTextUsername`, `editTextEmail`, `editTextImageUrl`**:  Declaración de elementos de entrada de texto para el nombre de usuario, correo electrónico y URL de la imagen.
+* **`buttonUpdateUser`**: Declaración del botón para crear un nuevo usuario.
+* **`setOnClickListener`**: Se establece un listener para el botón `buttonUpdateUser`. Cuando se hace clic en él:
+    * Se crea un nuevo objeto `User` con los datos ingresados en los campos de texto.
+    * Se utiliza la clase `UserDao` para insertar el nuevo usuario en la base de datos SQLite.
+    * Se lanza la actividad `UserListActivity` para actualizar la lista de usuarios.
+
+```java 
+package com.example.sqlitep2;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.example.sqlitep2.data.dao.ProductDao;
+import com.example.sqlitep2.data.dao.UserDao;
+import com.example.sqlitep2.data.db.DatabaseManager;
+import com.example.sqlitep2.data.model.User;
+
+public class UserCreateActivity extends AppCompatActivity {
+
+    private static final String TAG = "OUT_USER_CREATE";
+    DatabaseManager dbManager;
+    private UserDao userDao;
+    private ProductDao productDao;
+
+    TextView editTextUsername, editTextEmail, editTextImageUrl;
+    Button buttonUpdateUser;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_user_create);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        DatabaseManager dbManager = DatabaseManager.getInstance(this);
+        userDao = new UserDao(dbManager.openDatabase());
+
+        editTextUsername = findViewById(R.id.editTextUsername);
+        editTextEmail = findViewById(R.id.editTextEmail);
+        editTextImageUrl = findViewById(R.id.editTextImageUrl);
+        buttonUpdateUser = findViewById(R.id.buttonCreateUser);
+
+        buttonUpdateUser.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                User user = new User();
+                user.setUsername(editTextUsername.getText().toString());
+                user.setEmail(editTextEmail.getText().toString());
+                user.setImageUrl(editTextImageUrl.getText().toString());
+                userDao.insert(user);
+                Intent intent = new Intent(UserCreateActivity.this, UserListActivity.class);
+                startActivity(intent);
+            }
+        });
+    }
+}
+```
+
+### **3. `UserDetailActivity`**
+
+
+* **`public class UserDetailActivity extends AppCompatActivity`**: Define la clase `UserDetailActivity` que hereda de `AppCompatActivity`.
+* **`onCreate(Bundle savedInstanceState)`**: Es el método que se ejecuta cuando se crea la actividad.
+* **`setContentView(R.layout.activity_user_detail)`**: Establece el diseño (`layout`) de la actividad, en este caso, el archivo `activity_user_detail.xml`.
+* **`textViewUsername`, `textViewEmail`, `imageViewUser`**:  Declaración de elementos para mostrar el nombre de usuario, correo electrónico y la imagen del usuario.
+* **`buttonUpdateUser`**: Declaración del botón para actualizar el usuario.
+* **`buttonDeleteUser`**: Declaración del botón para eliminar el usuario.
+* **`setOnClickListener`**: Se establecen listeners para ambos botones.
+    * **`buttonUpdateUser`**: Lanza la actividad `UserEditActivity` para editar los datos del usuario.
+    * **`buttonDeleteUser`**: Muestra un diálogo de confirmación antes de eliminar el usuario.
+
+```java 
+package com.example.sqlitep2;
+
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.example.sqlitep2.data.dao.ProductDao;
+import com.example.sqlitep2.data.dao.UserDao;
+import com.example.sqlitep2.data.db.DatabaseManager;
+import com.example.sqlitep2.data.model.User;
+
+public class UserDetailActivity extends AppCompatActivity {
+    private static final String TAG = "OUT_USER_EDIT";
+    DatabaseManager dbManager;
+    private UserDao userDao;
+    private ProductDao productDao;
+
+    TextView textViewUsername, textViewEmail;
+    ImageView imageViewUser;
+    Button buttonUpdateUser, buttonDeleteUser;
+
+    private long userId;
+    private String username;
+    private String email;
+    private String imageUrl;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_user_detail);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        DatabaseManager dbManager = DatabaseManager.getInstance(this);
+        userDao = new UserDao(dbManager.openDatabase());
+
+        textViewUsername = findViewById(R.id.textViewUsername);
+        textViewEmail = findViewById(R.id.textViewEmail);
+        imageViewUser = findViewById(R.id.imageViewUser);
+        buttonUpdateUser = findViewById(R.id.buttonUpdateUser);
+        buttonDeleteUser = findViewById(R.id.buttonDeleteUser);
+
+        Intent intent = getIntent();
+        userId = intent.getLongExtra("USER_ID", -1);
+        username = intent.getStringExtra("USERNAME");
+        email = intent.getStringExtra("EMAIL");
+        imageUrl = intent.getStringExtra("IMAGE_URL");
+
+        textViewUsername.setText(username);
+        textViewEmail.setText(email);
+
+        loadUserImage(imageUrl);
+
+        buttonUpdateUser.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(UserDetailActivity.this, UserEditActivity.class);
+                intent.putExtra("USER_ID", userId);
+                intent.putExtra("USERNAME", username);
+                intent.putExtra("EMAIL", email);
+                intent.putExtra("IMAGE_URL", imageUrl);
+                startActivity(intent);
+            }
+        });
+
+        buttonDeleteUser.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showConfirmationDialog();
+            }
+        });
+    }
+
+    private void loadUserImage(String imageUrl) {
+        Glide.with(this)
+                .load(imageUrl)
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .into(imageViewUser);
+    }
+
+    private void showConfirmationDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Confirmación")
+                .setMessage("¿Estás seguro de que quieres realizar esta acción?")
+                .setPositiveButton("Sí", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        userDao.deleteAllUsers();
+                        Intent intent = new Intent(UserDetailActivity.this, UserListActivity.class);
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // Acción a realizar si el usuario cancela
+                        dialog.cancel();
+                    }
+                });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+}
+```
+
+### **4. `UserEditActivity`**
+
+* **`public class UserEditActivity extends AppCompatActivity`**: Define la clase `UserEditActivity` que hereda de `AppCompatActivity`.
+* **`onCreate(Bundle savedInstanceState)`**: Es el método que se ejecuta cuando se crea la actividad.
+* **`setContentView(R.layout.activity_user_edit)`**: Establece el diseño (`layout`) de la actividad, en este caso, el archivo `activity_user_edit.xml`.
+* **`editTextUsername`, `editTextEmail`, `editTextImageUrl`**:  Declaración de elementos de entrada de texto para el nombre de usuario, correo electrónico y URL de la imagen.
+* **`buttonUpdateUser`**: Declaración del botón para actualizar los datos del usuario.
+* **`setOnClickListener`**: Se establece un listener para el botón `buttonUpdateUser`. Cuando se hace clic en él:
+    * Se crea un nuevo objeto `User` con los datos ingresados en los campos de texto.
+    * Se utiliza la clase `UserDao` para actualizar los datos del usuario en la base de datos SQLite.
+    * Se lanza la actividad `UserListActivity` para actualizar la lista de usuarios.
+
+```java 
+package com.example.sqlitep2;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.example.sqlitep2.data.dao.ProductDao;
+import com.example.sqlitep2.data.dao.UserDao;
+import com.example.sqlitep2.data.db.DatabaseManager;
+import com.example.sqlitep2.data.model.User;
+
+public class UserEditActivity extends AppCompatActivity {
+
+    private static final String TAG = "OUT_USER_EDIT";
+    DatabaseManager dbManager;
+    private UserDao userDao;
+    private ProductDao productDao;
+
+    TextView editTextUsername, editTextEmail, editTextImageUrl;
+    Button buttonUpdateUser;
+
+    private long userId;
+    private String username;
+    private String email;
+    private String imageUrl;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_user_edit);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        DatabaseManager dbManager = DatabaseManager.getInstance(this);
+        userDao = new UserDao(dbManager.openDatabase());
+
+        editTextUsername = findViewById(R.id.editTextUsername);
+        editTextEmail = findViewById(R.id.editTextEmail);
+        editTextImageUrl = findViewById(R.id.editTextImageUrl);
+        buttonUpdateUser = findViewById(R.id.buttonUpdateUser);
+
+        Intent intent = getIntent();
+        userId = intent.getLongExtra("USER_ID", -1);
+        username = intent.getStringExtra("USERNAME");
+        email = intent.getStringExtra("EMAIL");
+        imageUrl = intent.getStringExtra("IMAGE_URL");
+
+        editTextUsername.setText(username);
+        editTextEmail.setText(email);
+        editTextImageUrl.setText(imageUrl);
+
+        buttonUpdateUser.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                User user = new User();
+                user.setId(userId);
+                user.setUsername(editTextUsername.getText().toString());
+                user.setEmail(editTextEmail.getText().toString());
+                user.setImageUrl(editTextImageUrl.getText().toString());
+                userDao.update(user);
+                Intent intent = new Intent(UserEditActivity.this, UserListActivity.class);
+                startActivity(intent);
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dbManager.closeDatabase();
+    }
+}
+```
+
+### **5. `UserListActivity`**
+
+* **`public class UserListActivity extends AppCompatActivity`**: Define la clase `UserListActivity` que hereda de `AppCompatActivity`.
+* **`onCreate(Bundle savedInstanceState)`**: Es el método que se ejecuta cuando se crea la actividad.
+* **`setContentView(R.layout.activity_user_list)`**: Establece el diseño (`layout`) de la actividad, en este caso, el archivo `activity_user_list.xml`.
+* **`recyclerView`**: Declaración del `RecyclerView` para mostrar la lista de usuarios.
+* **`adapter`**: Declaración de un `UserAdapter` para manejar la visualización de los datos en el `RecyclerView`.
+* **`btnMenu`**: Declaración del botón para regresar a la `MainActivity`.
+* **`setOnClickListener`**: Se establece un listener para el botón `btnMenu`.
+* **`setOnItemClickListener`**: Se establece un listener para el `RecyclerView` que se activa al hacer clic en un elemento de la lista.
+
+```java 
+package com.example.sqlitep2;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.sqlitep2.data.adapter.UserAdapter;
+import com.example.sqlitep2.data.dao.ProductDao;
+import com.example.sqlitep2.data.dao.UserDao;
+import com.example.sqlitep2.data.db.DatabaseManager;
+import com.example.sqlitep2.data.model.Product;
+import com.example.sqlitep2.data.model.User;
+
+import java.util.List;
+
+public class UserListActivity extends AppCompatActivity {
+
+    DatabaseManager dbManager;
+    private UserDao userDao;
+
+    private RecyclerView recyclerView;
+    private UserAdapter adapter;
+    private Button btnMenu;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_user_list);
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
+        DatabaseManager dbManager = DatabaseManager.getInstance(this);
+        userDao = new UserDao(dbManager.openDatabase());
+
+        List<User> allUsers = userDao.getAllUsers();
+
+        recyclerView = findViewById(R.id.recyclerView);
+        btnMenu = findViewById(R.id.btnMenu);
+
+        btnMenu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(UserListActivity.this, MainActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        adapter = new UserAdapter(allUsers);
+        adapter.setOnItemClickListener(user -> {
+
+            Intent intent = new Intent(UserListActivity.this, UserDetailActivity.class);
+            // Put user data into the intent
+            intent.putExtra("USER_ID", user.getId());
+            intent.putExtra("USERNAME", user.getUsername());
+            intent.putExtra("EMAIL", user.getEmail());
+            intent.putExtra("IMAGE_URL", user.getImageUrl());
+            // Start the EditUserActivity
+            startActivity(intent);
+
+        });
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dbManager.closeDatabase();
+    }
+}
+```
+
+**Explicación adicional:**
+
+* **`DatabaseManager`**: Es una clase que gestiona la conexión a la base de datos SQLite.
+* **`UserDao`**: Es una clase DAO (Data Access Object) que proporciona métodos para interactuar con la tabla de usuarios en la base de datos.
+
+* `MainActivity`: La actividad principal que muestra los botones para acceder a las otras actividades.
+* `UserCreateActivity`: Permite al usuario crear nuevos usuarios.
+* `UserDetailActivity`: Muestra los detalles de un usuario específico.
+* `UserEditActivity`: Permite al usuario editar los datos de un usuario.
+* `UserListActivity`: Muestra una lista de todos los usuarios.
+
+## Configuraciones y herramientas
+
+### Dependencia Glide
+
+Glide es una **biblioteca de código abierto** para Android que se encarga de **cargar y mostrar imágenes** de manera eficiente y fácil. Es una de las bibliotecas de imágenes más populares para Android, conocida por su:
+
+* **Rendimiento:** Carga y muestra imágenes rápidamente, incluso de forma asíncrona, sin bloquear el hilo principal de la aplicación.
+* **Flexibilidad:** Soporta una amplia variedad de formatos de imagen y puede integrarse con otras bibliotecas de Android.
+* **Facilidad de uso:**  Ofrece una API sencilla y fácil de entender, permitiendo que la carga de imágenes se realice con pocas líneas de código.
+
+**Principales características de Glide:**
+
+* **Carga de imágenes desde diferentes fuentes:** URL, archivos locales, recursos de la aplicación, almacenamiento en caché, etc.
+* **Escalado y transformación de imágenes:** Permite ajustar el tamaño y la forma de las imágenes para que se adapten al diseño de la aplicación.
+* **Caché inteligente:** Almacena imágenes en caché para que las cargas posteriores sean más rápidas.
+* **Manejo de errores:** Ofrece opciones para manejar errores durante la carga de imágenes, como mostrar un mensaje de error o una imagen predeterminada.
+
+**Instalación:**
+
+```kts title="build.gradle.kts"
+dependencies {
+
+    implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.activity)
+    implementation(libs.constraintlayout)
+    // highlight-start
+    implementation ("com.github.bumptech.glide:glide:4.13.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.13.0")
+    // highlight-end
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
+}
+```
+
+### AndroidManifest.xml
+
+- La línea `<uses-permission android:name="android.permission.INTERNET" />` en el archivo `AndroidManifest.xml` de tu aplicación Android  **solicita al sistema operativo Android permiso para que tu aplicación acceda a internet**. 
+
+- La línea android:theme="@style/AppTheme" dentro del elemento `<application>` en tu archivo AndroidManifest.xml define el tema visual que se aplicará a tu aplicación Android.
+
+```xml title="AndroidManifest.xml"
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    // highlight-start
+    <uses-permission android:name="android.permission.INTERNET" />
+    // highlight-end
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+         // highlight-start
+        android:theme="@style/AppTheme"
+        // highlight-end
+        tools:targetApi="31">
+        <activity
+            android:name=".UserDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UserCreateActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UserEditActivity"
+            android:exported="false" />
+        <activity
+            android:name=".UserListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+```
+### Material Theme Builder
+
+[https://www.figma.com/community/plugin/1034969338659738588/material-theme-builder](https://www.figma.com/community/plugin/1034969338659738588/material-theme-builder)
+
+Este plugin te ayuda a **crear temas para aplicaciones Android o iOS basados en el sistema de diseño de Material Design**.
+
+**¿Qué es Material Design?**
+
+Material Design es un lenguaje de diseño desarrollado por Google para crear interfaces de usuario atractivas, consistentes y fáciles de usar. Se caracteriza por:
+
+* **Elementos visuales**:  como sombras, transiciones y animaciones que dan una sensación de profundidad y movimiento.
+* **Grid system:**  Un sistema de rejilla que ayuda a organizar los elementos de la interfaz de forma ordenada y coherente.
+* **Paleta de colores**:  Un conjunto de colores predefinidos que se pueden utilizar para crear interfaces atractivas y accesibles.
+
+**¿Cómo funciona el plugin Material Theme Builder?**
+
+1. **Selecciona un tema**: El plugin te ofrece una selección de temas de Material Design (por ejemplo, Light, Dark, etc.).
+2. **Personaliza el tema**: Puedes personalizar el tema ajustando los colores, las fuentes y otros elementos visuales.
+3. **Exporta el tema**: Una vez que hayas personalizado el tema, puedes exportarlo como un archivo CSS, Sass o JSON.
+
+**Ventajas del plugin Material Theme Builder:**
+
+* **Ahorra tiempo**:  El plugin te ayuda a crear temas de Material Design de forma rápida y sencilla.
+* **Consistencia**:  El plugin asegura que los temas que creas sean consistentes con el sistema de diseño de Material Design.
+* **Flexibilidad**:  El plugin te permite personalizar el tema para que se adapte a las necesidades de tu aplicación.
+
+## Actividad: Proyecto Integrador - Desarrollo de Aplicación Móvil con CRUD SQLite - Avance 1
+
+**Objetivo:**
+
+Crear una aplicación móvil Android funcional, **basada en la aplicación CRUD SQLite en Java utilizando POO y el patrón DAO**, que permita gestionar un conjunto de datos, adaptando el ejemplo a la idea seleccionada por el grupo.
+
+**Procedimiento:**
+
+1. **Trabajo en equipo:** 
+    * El grupo debe seleccionar una idea para la aplicación, considerando la viabilidad, el interés del proyecto y la posibilidad de adaptar la base de datos SQLite del ejemplo a la nueva funcionalidad.
+    * Dividan las tareas entre los miembros del grupo y establezcan un cronograma de trabajo.
+2. **Desarrollo de la aplicación:**
+    * Creen un repositorio en GitHub para el proyecto integrador del grupo.
+    * Utilicen el IDE de Android Studio para el desarrollo de la aplicación, tomando como base el código fuente del ejemplo CRUD SQLite proporcionado.
+    * Modifiquen y amplíen el código fuente del ejemplo para:
+        * **Adaptar la estructura de la base de datos SQLite:**  Ajusten las tablas y columnas para que coincidan con la nueva idea.
+        * **Implementar las nuevas funcionalidades:**  Añadan las operaciones CRUD necesarias para gestionar los datos de la aplicación.
+        * **Diseñar la interfaz de usuario:**  Creen una interfaz de usuario atractiva e intuitiva para interactuar con los datos.
+        * **Implementar la lógica de negocio:**  Integren la lógica de negocio necesaria para la correcta interacción de la aplicación con la base de datos.
+        * **Incorporar recursos:**  Añadan imágenes, sonidos, o cualquier otro recurso que se considere necesario para la aplicación.        
+        * **Realizar pruebas:**  Ejecuten pruebas exhaustivas para asegurar la calidad y estabilidad de la aplicación.
+3. **Presentación del proyecto:**
+    * Documenta el proyecto en el repositorio de GitHub, incluyendo:
+        * **Readme:**  Descripción del proyecto, instrucciones de instalación y uso, cambios realizados al código fuente.
+        * **Código fuente:**  Código limpio y bien documentado, con comentarios que expliquen las modificaciones realizadas.
+        * **Diagrama de flujo:**  Representación gráfica del funcionamiento de la aplicación.
+        * **Diagrama de clases:**  Representación gráfica de las clases del proyecto.
+    * Realicen una presentación del proyecto, mostrando la funcionalidad de la aplicación, la arquitectura implementada y las adaptaciones realizadas al código fuente original. 
+    * El proyecto se evaluará según la funcionalidad, la calidad del código, la documentación y la presentación.
+
+**Recursos:**
+
+* Código fuente de la aplicación CRUD SQLite en Java utilizando POO y el patrón DAO.
+* Material del curso de desarrollo móvil.
+* Recursos online de Android Studio y desarrollo móvil.
+
+**Entrega:**
+
+* El repositorio de GitHub del proyecto integrador.
+* Presentación del proyecto en la fecha establecida.
+
+**Criterios de evaluación:**
+
+* Funcionalidad de la aplicación.
+* Calidad del código fuente.
+* Documentación del proyecto, incluyendo las modificaciones realizadas.
+* Trabajo en equipo.
+* Presentación del proyecto.
+
+## Repositorio
+
+```bash
+git clone https://github.com/jfinfocesde/pam2_crud_sqlite_dao.git
+```
