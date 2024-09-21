@@ -1,5 +1,412 @@
 ---
 sidebar_position: 8
-draft: true
+draft: false
 slug: /semana8
 ---
+ # Semana 8
+
+ ## ¿Qué es Firebase?
+
+Firebase es una plataforma de desarrollo de aplicaciones móviles y web que ofrece una amplia gama de servicios para crear, desarrollar y escalar aplicaciones de forma rápida y sencilla. Es un servicio de Google Cloud Platform que proporciona herramientas y funciones para:
+
+* **Desarrollo:** Creación de aplicaciones web y móviles con diferentes lenguajes de programación.
+* **Base de datos:** Almacenamiento de datos en tiempo real para aplicaciones móviles y web.
+* **Autenticación:** Integración de mecanismos de autenticación para controlar el acceso a las aplicaciones.
+* **Análisis:** Seguimiento del rendimiento de las aplicaciones y obtención de información sobre el comportamiento de los usuarios.
+* **Notificaciones:** Envío de notificaciones push personalizadas a los usuarios.
+* **Hosting:** Alojamiento web para las aplicaciones desarrolladas.
+* **Machine Learning:** Integración de funcionalidades de Machine Learning para mejorar las aplicaciones.
+* **Pruebas:** Realización de pruebas A/B para optimizar las funcionalidades de las aplicaciones.
+
+
+## Para qué sirve Firebase
+
+Firebase ofrece una solución integral para el desarrollo de aplicaciones, abarcando desde la creación de la base de datos hasta la implementación de funcionalidades de inteligencia artificial. Algunos de sus beneficios más destacados son:
+
+* **Facilidad de uso:** Firebase ofrece una interfaz fácil de usar y una documentación detallada para facilitar el desarrollo de aplicaciones.
+* **Escalabilidad:** La plataforma es altamente escalable y se adapta a las necesidades de cualquier aplicación, desde proyectos pequeños hasta aplicaciones con millones de usuarios.
+* **Integración con Google Cloud Platform:** Firebase se integra perfectamente con otras herramientas de Google Cloud Platform, lo que permite acceder a una amplia gama de servicios.
+* **Reducción de costos:** Firebase ofrece un modelo de precios flexible que se ajusta al tamaño y las necesidades de cada proyecto.
+* **Seguridad:** La plataforma está construida con medidas de seguridad robustas para proteger los datos de los usuarios.
+
+Firebase ofrece una gran variedad de productos que se dividen en 4 categorías principales:
+
+**1. Desarrollo:**
+
+* **Firebase SDKs:** Proporcionan bibliotecas para acceder a los servicios de Firebase desde diferentes lenguajes de programación (JavaScript, Swift, Java, C++, Python, etc.).
+* **Firebase CLI:** Herramienta de línea de comandos para administrar proyectos de Firebase desde la terminal.
+* **Firebase Hosting:** Servicio de alojamiento web para aplicaciones web estáticas y dinámicas.
+* **Cloud Functions:** Permite ejecutar código backend en respuesta a eventos de Firebase o de otras plataformas.
+* **Firebase Extensions:** Extensiones pre-construidas que simplifican tareas comunes como la integración con servicios de terceros.
+
+**2. Base de datos:**
+
+* **Realtime Database:** Base de datos NoSQL en tiempo real que permite a los usuarios acceder y sincronizar datos en tiempo real.
+* **Cloud Firestore:** Base de datos NoSQL escalable y de alto rendimiento, ideal para aplicaciones móviles y web.
+* **Cloud Storage:** Servicio de almacenamiento de archivos en la nube para guardar imágenes, vídeos y otros datos.
+
+**3. Autenticación y autorización:**
+
+* **Authentication:** Permite a los usuarios iniciar sesión en aplicaciones de Firebase con diferentes métodos de autenticación, como correo electrónico/contraseña, Google, Facebook, Twitter, etc.
+* **Authorization:** Controla el acceso a los recursos de la aplicación en función de la identidad del usuario.
+
+**4. Análisis y optimización:**
+
+* **Analytics:** Recopila datos de uso de la aplicación para comprender el comportamiento de los usuarios.
+* **Performance Monitoring:** Monitorea el rendimiento de la aplicación y detecta posibles problemas de rendimiento.
+* **Crashlytics:** Detecta y reporta errores y fallos en la aplicación para ayudar a resolverlos.
+* **Remote Config:** Permite actualizar el comportamiento y la apariencia de la aplicación sin necesidad de publicar una nueva versión.
+* **A/B Testing:** Realiza pruebas A/B para comparar diferentes versiones de la aplicación y determinar la mejor opción.
+* **Predictive Analytics:** Permite realizar análisis predictivos para comprender mejor el comportamiento de los usuarios.
+
+**Además de estas categorías principales, Firebase también ofrece otros servicios como:**
+
+* **Cloud Messaging:** Servicio para enviar notificaciones push a dispositivos móviles.
+* **Firebase Machine Learning:** Permite integrar modelos de Machine Learning en las aplicaciones.
+* **Firebase In-App Messaging:** Permite enviar mensajes personalizados a los usuarios dentro de la aplicación.
+* **Firebase Dynamic Links:** Permite crear enlaces dinámicos que dirigen a los usuarios a diferentes partes de la aplicación.
+
+## Proyecto Android Studio Java: CRUD Firebase
+
+### Proyecto estructura
+```bash
+com.example.myapp
+│   MainActivity.java
+│
+├───data
+    ├───adapter
+    │       UserAdapter.java    
+    ├───dao
+    │       UserDao.java      
+    └───model
+            User.java
+```
+
+### User (Model)
+
+```java
+package com.example.pfb.data.model;
+
+public class User {
+    private String id;
+    private String name;
+    private String email;
+    private String image;
+
+    public User() {
+    }
+
+    public User(String name, String email, String image) {
+        this.name = name;
+        this.email = email;
+        this.image = image;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+}
+
+```
+
+### UserDao (DAO)
+
+```java
+package com.example.pfb.data.dao;
+
+
+import androidx.annotation.NonNull;
+
+import com.example.pfb.data.model.User;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+
+public class UserDao {
+
+    FirebaseFirestore db;
+    private String collection = "users";
+
+    public UserDao(FirebaseFirestore db) {
+        this.db = db;
+    }
+
+    public void insert(User user, OnSuccessListener<Boolean> listener) {
+        db.collection(collection)
+                .add(user)
+                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                    @Override
+                    public void onSuccess(DocumentReference documentReference) {
+                        listener.onSuccess(true);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        listener.onSuccess(false);
+                    }
+                });
+    }
+
+    public void getUserbyId(String id, OnSuccessListener<User> listener) {
+        db.collection(collection).document(id)
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        if (documentSnapshot.exists()) {
+                            User user = documentSnapshot.toObject(User.class);
+                            listener.onSuccess(user);
+                        } else {
+                            listener.onSuccess(null);
+                        }
+                    }
+                });
+    }
+
+    public void getAllUsers(OnSuccessListener<List<User>> listener) {
+        db.collection(collection).get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
+                    @Override
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        if (!queryDocumentSnapshots.isEmpty()) {
+                            List<User> userList = new ArrayList<>();
+                            for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                                User user = documentSnapshot.toObject(User.class);
+                                userList.add(user);
+                            }
+                            listener.onSuccess(userList);
+                        } else {
+                            listener.onSuccess(null);
+                        }
+                    }
+                });
+    }
+
+    public void update(String id, User user, OnSuccessListener<Boolean> listener) {
+
+        // Create a map with the data to update
+        Map<String, Object> userUpdate = new HashMap<>();
+        userUpdate.put("name", user.getName());
+        userUpdate.put("email", user.getEmail());
+        userUpdate.put("image", user.getImage());
+        db.collection(collection)
+                .document(id)
+                .update(userUpdate)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        listener.onSuccess(true);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        listener.onSuccess(false);
+                    }
+                });
+    }
+
+    public void delete(String id, OnSuccessListener<Boolean> listener) {
+        db.collection(collection)
+                .document(id)
+                .delete()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        listener.onSuccess(true);
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        listener.onSuccess(false);
+                    }
+                });
+    }
+
+}
+
+```
+
+### UserAdapter (Adapter)
+
+```java
+package com.example.pfb.data.adapter;
+
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.example.pfb.R;
+import com.example.pfb.data.model.User;
+
+import java.util.List;
+
+public class UserAdapter extends RecyclerView.Adapter<UserAdapter.UserViewHolder> {
+    List<User> userList;
+
+    private OnItemClickListener listener;
+
+    public interface OnItemClickListener {
+        void onItemClick(User user);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
+    public UserAdapter(List<User> userList) {
+        this.userList = userList;
+    }
+
+    @NonNull
+    @Override
+    public UserAdapter.UserViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.user_item_layout, parent, false);
+        return new UserViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull UserAdapter.UserViewHolder holder, int position) {
+        User user = userList.get(position);
+        holder.nameUserItem.setText(user.getName());
+        holder.emailUserItem.setText(user.getEmail());
+        Glide.with(holder.itemView.getContext())
+                .load(user.getImage())
+                .centerCrop()
+                .into(holder.imgUserItem);
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                listener.onItemClick(user);
+            }
+        });
+
+    }
+
+    @Override
+    public int getItemCount() {
+        return userList.size();
+    }
+
+    public class UserViewHolder extends RecyclerView.ViewHolder {
+        private TextView nameUserItem, emailUserItem;
+        private ImageView imgUserItem;
+
+        public UserViewHolder(@NonNull View itemView) {
+            super(itemView);
+            nameUserItem = itemView.findViewById(R.id.nameUserItem);
+            emailUserItem = itemView.findViewById(R.id.emailUserItem);
+            imgUserItem = itemView.findViewById(R.id.imgUserItem);
+        }
+    }
+}
+
+```
+
+### user_item_loyout (Layout - RecyclerView)
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="5dp">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/imgUserItem"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                tools:srcCompat="@tools:sample/avatars" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/nameUserItem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:hint="Name" />
+
+                <TextView
+                    android:id="@+id/emailUserItem"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:hint="Email" />
+            </LinearLayout>
+        </LinearLayout>
+
+
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+
+
+
