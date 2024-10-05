@@ -1,5 +1,468 @@
 ---
 sidebar_position: 9
-draft: true
+draft: false
 slug: /semana9
 ---
+import VimeoEmbed from '@site/src/components/VimeoEmbed';
+
+
+# Semana 9
+
+## CRUD Firestore - Android Studio Java
+
+### 1. Configurar firebase android studio
+
+<VimeoEmbed 
+  videoId="1016383743"
+  title="Configurar Firebase Android"
+/>
+
+### 2. Clase UserDao (
+
+Este código define una clase `UserDao` en Java, que actúa como un Data Access Object (DAO) para la colección de usuarios en una base de datos Firebase Firestore. Esta clase proporciona métodos para interactuar con la colección "users", incluyendo operaciones como insertar, actualizar, obtener y eliminar usuarios. 
+
+La clase `UserDao` utiliza las API de Firebase Firestore para ejecutar estas operaciones en la base de datos. Los métodos se basan en tareas asíncronas para realizar las operaciones de manera eficiente. Los listener se utilizan para notificar al usuario el resultado de las operaciones, con callbacks para el éxito y el fallo. 
+
+La clase también utiliza un patrón de diseño de DAO, que separa la lógica de acceso a datos de la lógica empresarial, mejorando la organización y la modularidad del código. 
+
+```java
+package com.example.fbt1.data.dao;
+
+import android.util.Log;
+
+import androidx.annotation.NonNull;
+
+import com.example.fbt1.data.model.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * DAO (Data Access Object) para la colección de usuarios en Firebase Firestore.
+ * Esta clase proporciona métodos para interactuar con la colección "users", incluyendo:
+ * - Insertar un nuevo usuario.
+ * - Actualizar los datos de un usuario existente.
+ * - Actualizar la imagen de un usuario existente.
+ * - Obtener un usuario por su ID.
+ * - Obtener todos los usuarios de la colección.
+ * - Eliminar un usuario de la colección.
+ */
+public class UserDao {
+
+    private static final String TAG = "UserDao";
+    private static final String COLLECTION_NAME = "users";
+
+    private final FirebaseFirestore db;
+
+    /**
+     * Constructor de la clase UserDao.
+     *
+     * @param db Instancia de FirebaseFirestore para acceder a la base de datos.
+     */
+    public UserDao(FirebaseFirestore db) {
+        this.db = db;
+    }
+
+    /**
+     * Inserta un nuevo usuario en la colección "users".
+     *
+     * @param user      El objeto User a insertar.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void insert(User user, OnSuccessListener<String> listener) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", user.getName());
+        userData.put("email", user.getEmail());
+        userData.put("image", "");
+
+        db.collection(COLLECTION_NAME)
+                .add(userData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "onSuccess: " + documentReference.getId());
+                    listener.onSuccess(documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(null);
+                });
+    }
+
+    /**
+     * Actualiza los datos de un usuario existente.
+     *
+     * @param id       El ID del usuario a actualizar.
+     * @param user      El objeto User con los datos actualizados.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void update(String id, User user, OnSuccessListener<Boolean> listener) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", user.getName());
+        userData.put("email", user.getEmail());
+
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .update(userData)
+                .addOnSuccessListener(unused -> listener.onSuccess(true))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(false);
+                });
+    }
+
+    /**
+     * Actualiza la imagen de un usuario existente.
+     *
+     * @param id       El ID del usuario a actualizar.
+     * @param image    La nueva imagen del usuario.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void updateImage(String id, String image, OnSuccessListener<Boolean> listener) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("image", image);
+
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .update(userData)
+                .addOnSuccessListener(unused -> listener.onSuccess(true))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(false);
+                });
+    }
+
+    /**
+     * Obtiene un usuario por su ID.
+     *
+     * @param id       El ID del usuario a obtener.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void getById(String id, OnSuccessListener<User> listener) {
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            User user = document.toObject(User.class);
+                            listener.onSuccess(user);
+                        } else {
+                            listener.onSuccess(null);
+                        }
+                    } else {
+                        Log.e(TAG, "onComplete: ", task.getException());
+                        listener.onSuccess(null);
+                    }
+                });
+    }
+
+    /**
+     * Obtiene todos los usuarios de la colección.
+     *
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void getAll(OnSuccessListener<List<User>> listener) {
+        db.collection(COLLECTION_NAME)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        List<User> userList = new ArrayList<>();
+                        for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                            User user = documentSnapshot.toObject(User.class);
+                            userList.add(user);
+                        }
+                        listener.onSuccess(userList);
+                    } else {
+                        listener.onSuccess(null);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(null);
+                });
+    }
+
+    /**
+     * Elimina un usuario de la colección por su ID.
+     *
+     * @param id       El ID del usuario a eliminar.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void delete(String id, OnSuccessListener<Boolean> listener) {
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .delete()
+                .addOnSuccessListener(unused -> listener.onSuccess(true))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(false);
+                });
+    }
+}
+```
+
+### 3. Explicación de los métodos de la clase UserDao:
+
+**1. `insert(User user, OnSuccessListener<String> listener)`**
+
+* **Propósito:** Inserta un nuevo usuario en la colección "users" de Firestore.
+
+```java
+public void insert(User user, OnSuccessListener<String> listener) {
+    Map<String, Object> userData = new HashMap<>();
+    userData.put("name", user.getName());
+    userData.put("email", user.getEmail());
+    userData.put("image", "");
+
+    db.collection(COLLECTION_NAME)
+            .add(userData)
+            .addOnSuccessListener(documentReference -> {
+                Log.d(TAG, "onSuccess: " + documentReference.getId());
+                listener.onSuccess(documentReference.getId());
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "onFailure: ", e);
+                listener.onSuccess(null);
+            });
+}
+```
+
+* **Parámetros:**
+    * `user`: Un objeto `User` que contiene los datos del usuario a insertar.
+    * `listener`: Un `OnSuccessListener<String>` que se invoca cuando la operación de inserción se completa correctamente. El listener recibe como parámetro el ID del documento recién creado en Firestore.
+* **Funcionamiento:**
+    1. Crea un mapa `userData` que contiene los datos del usuario (nombre, email, imagen).
+    2. Utiliza `db.collection(COLLECTION_NAME).add(userData)` para agregar el mapa como un nuevo documento en la colección "users".
+    3. El método `addOnSuccessListener` se invoca si la operación de inserción se completa correctamente. El listener recibe como parámetro el `DocumentReference` del documento recién creado, del cual se obtiene el ID.
+    4. El método `addOnFailureListener` se invoca si la operación de inserción falla. El listener recibe como parámetro la excepción que causó el error.
+* **Retorno:** No retorna ningún valor.
+
+**2. `update(String id, User user, OnSuccessListener<Boolean> listener)`**
+
+* **Propósito:** Actualiza los datos de un usuario existente en la colección "users".
+
+```java
+public void update(String id, User user, OnSuccessListener<Boolean> listener) {
+    Map<String, Object> userData = new HashMap<>();
+    userData.put("name", user.getName());
+    userData.put("email", user.getEmail());
+
+    db.collection(COLLECTION_NAME)
+            .document(id)
+            .update(userData)
+            .addOnSuccessListener(unused -> listener.onSuccess(true))
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "onFailure: ", e);
+                listener.onSuccess(false);
+            });
+}
+```
+
+* **Parámetros:**
+    * `id`: El ID del documento del usuario a actualizar.
+    * `user`: Un objeto `User` que contiene los datos actualizados del usuario.
+    * `listener`: Un `OnSuccessListener<Boolean>` que se invoca cuando la operación de actualización se completa correctamente. El listener recibe como parámetro `true` si la actualización fue exitosa, o `false` si hubo un error.
+* **Funcionamiento:**
+    1. Crea un mapa `userData` que contiene los datos actualizados del usuario (nombre, email).
+    2. Utiliza `db.collection(COLLECTION_NAME).document(id).update(userData)` para actualizar el documento con el ID proporcionado.
+    3. El método `addOnSuccessListener` se invoca si la operación de actualización se completa correctamente. El listener recibe como parámetro `true` para indicar el éxito.
+    4. El método `addOnFailureListener` se invoca si la operación de actualización falla. El listener recibe como parámetro la excepción que causó el error y retorna `false` para indicar el fallo.
+* **Retorno:** No retorna ningún valor.
+
+**3. `updateImage(String id, String image, OnSuccessListener<Boolean> listener)`**
+
+* **Propósito:** Actualiza la imagen de un usuario existente en la colección "users".
+
+```java
+public void updateImage(String id, String image, OnSuccessListener<Boolean> listener) {
+    Map<String, Object> userData = new HashMap<>();
+    userData.put("image", image);
+
+    db.collection(COLLECTION_NAME)
+            .document(id)
+            .update(userData)
+            .addOnSuccessListener(unused -> listener.onSuccess(true))
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "onFailure: ", e);
+                listener.onSuccess(false);
+            });
+}
+```
+
+* **Parámetros:**
+    * `id`: El ID del documento del usuario a actualizar.
+    * `image`: La nueva imagen del usuario.
+    * `listener`: Un `OnSuccessListener<Boolean>` que se invoca cuando la operación de actualización se completa correctamente. El listener recibe como parámetro `true` si la actualización fue exitosa, o `false` si hubo un error.
+* **Funcionamiento:**
+    1. Crea un mapa `userData` que contiene la nueva imagen del usuario.
+    2. Utiliza `db.collection(COLLECTION_NAME).document(id).update(userData)` para actualizar el documento con el ID proporcionado.
+    3. El método `addOnSuccessListener` se invoca si la operación de actualización se completa correctamente. El listener recibe como parámetro `true` para indicar el éxito.
+    4. El método `addOnFailureListener` se invoca si la operación de actualización falla. El listener recibe como parámetro la excepción que causó el error y retorna `false` para indicar el fallo.
+* **Retorno:** No retorna ningún valor.
+
+**4. `getById(String id, OnSuccessListener<User> listener)`**
+
+* **Propósito:** Obtiene un usuario de la colección "users" por su ID.
+
+```java
+public void getById(String id, OnSuccessListener<User> listener) {
+    db.collection(COLLECTION_NAME)
+            .document(id)
+            .get()
+            .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    DocumentSnapshot document = task.getResult();
+                    if (document.exists()) {
+                        User user = document.toObject(User.class);
+                        listener.onSuccess(user);
+                    } else {
+                        listener.onSuccess(null);
+                    }
+                } else {
+                    Log.e(TAG, "onComplete: ", task.getException());
+                    listener.onSuccess(null);
+                }
+            });
+}
+```
+
+* **Parámetros:**
+    * `id`: El ID del documento del usuario a obtener.
+    * `listener`: Un `OnSuccessListener<User>` que se invoca cuando la operación de obtención se completa correctamente. El listener recibe como parámetro el objeto `User` que se encontró, o `null` si el documento no existe.
+* **Funcionamiento:**
+    1. Utiliza `db.collection(COLLECTION_NAME).document(id).get()` para obtener el documento con el ID proporcionado.
+    2. El método `addOnCompleteListener` se invoca cuando la operación de obtención se completa (éxito o fracaso).
+    3. Si la operación se completa correctamente (task.isSuccessful()), se verifica si el documento existe. Si existe, se crea un objeto `User` a partir del documento y se pasa al listener. Si no existe, se pasa `null` al listener.
+    4. Si la operación falla (task.isSuccessful() es falso), se registra un error en los logs y se pasa `null` al listener.
+* **Retorno:** No retorna ningún valor.
+
+**5. `getAll(OnSuccessListener<List<User>> listener)`**
+
+* **Propósito:** Obtiene todos los usuarios de la colección "users".
+
+```java
+public void getAll(OnSuccessListener<List<User>> listener) {
+    db.collection(COLLECTION_NAME)
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                if (!queryDocumentSnapshots.isEmpty()) {
+                    List<User> userList = new ArrayList<>();
+                    for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                        User user = documentSnapshot.toObject(User.class);
+                        userList.add(user);
+                    }
+                    listener.onSuccess(userList);
+                } else {
+                    listener.onSuccess(null);
+                }
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "onFailure: ", e);
+                listener.onSuccess(null);
+            });
+}
+```
+
+* **Parámetros:**
+    * `listener`: Un `OnSuccessListener<List<User>>` que se invoca cuando la operación de obtención se completa correctamente. El listener recibe como parámetro una lista de objetos `User` que se encontraron, o `null` si la colección está vacía.
+* **Funcionamiento:**
+    1. Utiliza `db.collection(COLLECTION_NAME).get()` para obtener todos los documentos de la colección "users".
+    2. El método `addOnSuccessListener` se invoca si la operación de obtención se completa correctamente. Se verifica si la colección está vacía (isEmpty()).
+    3. Si la colección no está vacía, se crea una lista de objetos `User` a partir de cada documento y se pasa al listener.
+    4. Si la colección está vacía, se pasa `null` al listener.
+    5. El método `addOnFailureListener` se invoca si la operación de obtención falla. El listener recibe como parámetro la excepción que causó el error y pasa `null` al listener.
+* **Retorno:** No retorna ningún valor.
+
+**6. `delete(String id, OnSuccessListener<Boolean> listener)`**
+
+* **Propósito:** Elimina un usuario de la colección "users" por su ID.
+
+```java
+public void delete(String id, OnSuccessListener<Boolean> listener) {
+    db.collection(COLLECTION_NAME)
+            .document(id)
+            .delete()
+            .addOnSuccessListener(unused -> listener.onSuccess(true))
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "onFailure: ", e);
+                listener.onSuccess(false);
+            });
+}
+```
+
+* **Parámetros:**
+    * `id`: El ID del documento del usuario a eliminar.
+    * `listener`: Un `OnSuccessListener<Boolean>` que se invoca cuando la operación de eliminación se completa correctamente. El listener recibe como parámetro `true` si la eliminación fue exitosa, o `false` si hubo un error.
+* **Funcionamiento:**
+    1. Utiliza `db.collection(COLLECTION_NAME).document(id).delete()` para eliminar el documento con el ID proporcionado.
+    2. El método `addOnSuccessListener` se invoca si la operación de eliminación se completa correctamente. El listener recibe como parámetro `true` para indicar el éxito.
+    3. El método `addOnFailureListener` se invoca si la operación de eliminación falla. El listener recibe como parámetro la excepción que causó el error y retorna `false` para indicar el fallo.
+* **Retorno:** No retorna ningún valor. 
+
+
+### 4. Cómo usar la clase UserDao:
+
+1. **Inicializar una instancia de `UserDao`:**
+   ```java
+   FirebaseFirestore db = FirebaseFirestore.getInstance();
+   UserDao userDao = new UserDao(db);
+   ```
+
+2. **Utilizar los métodos de la clase para interactuar con la colección "users":**
+   ```java
+   // Insertar un nuevo usuario
+   User newUser = new User("John Doe", "john.doe@example.com");
+   userDao.insert(newUser, new OnSuccessListener<String>() {
+       @Override
+       public void onSuccess(String documentId) {
+           Log.d(TAG, "Usuario insertado con ID: " + documentId);
+       }
+   });
+
+   // Obtener un usuario por ID
+   userDao.getById("userId", new OnSuccessListener<User>() {
+       @Override
+       public void onSuccess(User user) {
+           if (user != null) {
+               Log.d(TAG, "Usuario: " + user.getName());
+           } else {
+               Log.d(TAG, "Usuario no encontrado.");
+           }
+       }
+   });
+
+   // Actualizar los datos de un usuario
+   User updatedUser = new User("Jane Doe", "jane.doe@example.com");
+   userDao.update("userId", updatedUser, new OnSuccessListener<Boolean>() {
+       @Override
+       public void onSuccess(Boolean success) {
+           if (success) {
+               Log.d(TAG, "Usuario actualizado correctamente.");
+           } else {
+               Log.d(TAG, "Error al actualizar usuario.");
+           }
+       }
+   });
+
+   // Eliminar un usuario
+   userDao.delete("userId", new OnSuccessListener<Boolean>() {
+       @Override
+       public void onSuccess(Boolean success) {
+           if (success) {
+               Log.d(TAG, "Usuario eliminado correctamente.");
+           } else {
+               Log.d(TAG, "Error al eliminar usuario.");
+           }
+       }
+   });
+   ```
