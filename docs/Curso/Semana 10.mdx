@@ -1,5 +1,629 @@
 ---
 sidebar_position: 10
-draft: true
+draft: false
 slug: /semana10
 ---
+import VimeoEmbed from '@site/src/components/VimeoEmbed';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Semana 10
+
+## Firebase Storage: Almacenamiento en la Nube para tus Aplicaciones
+
+Firebase Storage es un servicio de almacenamiento de archivos en la nube que te permite almacenar y servir contenido multimedia como imágenes, videos, audio y archivos. Es una herramienta poderosa para aplicaciones web y móviles que necesitan un espacio seguro y escalable para sus datos.
+
+### ¿Qué lo hace especial?
+
+* Escalabilidad: Firebase Storage se escala automáticamente para manejar grandes volúmenes de datos, asegurando que tu aplicación nunca se quede sin espacio.
+* Seguridad: Tus archivos están protegidos con fuertes medidas de seguridad y acceso controlado, lo que asegura la integridad de tus datos.
+* Integración: Se integra de forma nativa con otros servicios de Firebase como Firebase Authentication, Realtime Database y Cloud Functions, simplificando el desarrollo.
+* Fácil de usar: La API de Firebase Storage es fácil de usar y entender, permitiéndote subir, descargar y administrar archivos con facilidad.
+* Integración con CDNs: Soporta CDNs (Redes de entrega de contenido) para un acceso rápido y confiable a tus archivos desde cualquier parte del mundo.
+
+### ¿Cómo funciona?
+
+1. Subir archivos: Puedes subir archivos a Firebase Storage desde tu aplicación web o móvil usando su API.
+2. Almacenamiento: Tus archivos se almacenan en buckets (contenedores), que actúan como carpetas virtuales para organizar tus datos.
+3. Acceso: Puedes acceder a tus archivos a través de URLs únicas que Firebase Storage genera para cada archivo.
+4. Descargar archivos: Tu aplicación puede descargar archivos desde Firebase Storage usando su API.
+
+Usos comunes:
+
+* Aplicaciones de redes sociales: Almacenar imágenes de perfil, fotos de publicaciones, vídeos y otros archivos multimedia.
+* Plataformas de comercio electrónico: Almacenar imágenes de productos, archivos de productos y descargas digitales.
+* Plataformas de aprendizaje: Almacenar vídeos de cursos, archivos de audio y documentos.
+* Aplicaciones de mensajería: Almacenar archivos de chat, fotos y videos compartidos.
+
+## Confirar Firebase Storage en Android Studio
+
+<VimeoEmbed 
+  videoId="1018433247"
+  title="Configurar Firebase Storage Android"
+/>
+
+## Ejemplos
+### 1. Subir imagen a Firebase Storage utilizando selector de fotos
+
+Este código implementa una actividad Android que permite al usuario seleccionar una imagen de su dispositivo y cargarla a Firebase Storage.
+
+
+
+:::info
+[Selector de fotos Android Studio](https://developer.android.com/training/data-storage/shared/photopicker?hl=es-419)
+
+Guía paso a paso para integrar un selector de imágenes dentro de una aplicación Android, utilizando registerForActivityResult para interactuar con la interfaz de selección del sistema.
+:::
+
+<Tabs>
+  <TabItem value="apple" label="MainActivity.java" default>    
+    ```java title="MainActivity.java"
+    package com.example.storage;
+
+    import android.net.Uri;
+    import android.os.Bundle;
+    import android.util.Log;
+    import android.view.View;
+    import android.widget.Button;
+
+    import androidx.activity.EdgeToEdge;
+    import androidx.activity.result.ActivityResultLauncher;
+    import androidx.activity.result.PickVisualMediaRequest;
+    import androidx.activity.result.contract.ActivityResultContracts;
+    import androidx.annotation.NonNull;
+    import androidx.appcompat.app.AppCompatActivity;
+    import androidx.core.graphics.Insets;
+    import androidx.core.view.ViewCompat;
+    import androidx.core.view.WindowInsetsCompat;
+
+    import com.google.android.gms.tasks.OnFailureListener;
+    import com.google.android.gms.tasks.OnSuccessListener;
+    import com.google.firebase.storage.FirebaseStorage;
+    import com.google.firebase.storage.StorageReference;
+    import com.google.firebase.storage.UploadTask;
+
+    import java.util.UUID;
+
+    public class MainActivity extends AppCompatActivity {
+        private Button btnUpload;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            EdgeToEdge.enable(this);
+            setContentView(R.layout.activity_main);
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+
+            FirebaseStorage storage = FirebaseStorage.getInstance();
+            StorageReference storageRef = storage.getReference();
+
+            btnUpload = findViewById(R.id.btnUpload);
+
+
+            // Registers a photo picker activity launcher in single-select mode.
+            ActivityResultLauncher<PickVisualMediaRequest> pickMedia = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+                // Callback is invoked after the user selects a media item or closes the
+                // photo picker.
+                if (uri != null) {
+                    Log.d("PhotoPicker", "Selected URI: " + uri);
+
+                    // Get a reference to the file to be uploaded
+                    StorageReference fileRef = storageRef.child("images/" + UUID.randomUUID().toString() + ".jpg"); // You can change the folder name and file extension if you want
+
+                    // Upload the file
+                    UploadTask uploadTask = fileRef.putFile(uri);
+
+                    // Observe the progress of the upload
+                    uploadTask.addOnSuccessListener((taskSnapshot) -> {
+                        // When the upload is successful, get the download URL
+                        taskSnapshot.getStorage().getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                Log.d("PhotoPicker", "Download URL: " + uri);
+                            }
+                        });
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.e("PhotoPicker", "Upload failed", e);
+                        }
+                    });
+                } else {
+                    Log.d("PhotoPicker", "No media selected");
+                }
+            });
+
+
+            btnUpload.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+
+                    // Launch the photo picker and let the user choose only images.
+                    pickMedia.launch(new PickVisualMediaRequest.Builder()
+                            .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                            .build());
+                }
+            });
+
+        }
+    }
+    ``` 
+  </TabItem>
+  <TabItem value="orange" label="activity_main.xml">
+    ```xml title="activity_main.xml"
+    <?xml version="1.0" encoding="utf-8"?>
+    <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity">
+
+        <Button
+            android:id="@+id/btnUpload"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Subir Imagen"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+    ```   
+  </TabItem>  
+</Tabs>
+
+#### Explicación:
+
+    **1.  Configuración:**
+
+    * **Paquetes:** Importa las bibliotecas necesarias para Android, Firebase Storage y la gestión de permisos.
+    * **Componentes:** Declara un botón `btnUpload` para que el usuario active la selección de imágenes.
+    * **Firebase Storage:** Inicializa una instancia de `FirebaseStorage` y obtiene una referencia al punto de almacenamiento principal.
+    * **Permisos:** Configura `EdgeToEdge` para aprovechar al máximo la pantalla y agrega un `OnApplyWindowInsetsListener` para gestionar las barras de estado y navegación.
+
+    **2.  Seleccionar Imagen:**
+
+    * **`registerForActivityResult`:** Utiliza la función `registerForActivityResult` para crear un lanzador de actividad que permita al usuario seleccionar una imagen desde su dispositivo.
+    * **`PickVisualMediaRequest`:** Crea una solicitud de selección de imagen usando `PickVisualMediaRequest.Builder` y configura `ImageOnly` para permitir que solo se seleccionen imágenes.
+    * **Callback:** Se define un callback que se ejecuta cuando el usuario selecciona una imagen. Recibe la URI de la imagen seleccionada como parámetro.
+
+    **3.  Cargar Imagen:**
+
+    * **Referencia de Archivo:**  Se crea una referencia al archivo a subir en Firebase Storage. El nombre del archivo se genera con un UUID para evitar duplicados.
+    * **`UploadTask`:** Se inicia la tarea de carga usando `fileRef.putFile(uri)`.
+    * **Observar el progreso:**
+        * **`addOnSuccessListener`:** Maneja el éxito de la carga, obtiene la URL de descarga desde `taskSnapshot.getStorage().getDownloadUrl()` y la imprime en el log.
+        * **`addOnFailureListener`:** Maneja errores durante la carga y los imprime en el log.
+
+    **4.  Click en el Botón:**
+
+    * **`setOnClickListener`:** Se define un listener para el botón `btnUpload`.
+    * **Iniciar la selección de imagen:** Cuando se hace clic en el botón, se inicia la actividad de selección de imagen usando el lanzador `pickMedia` y la solicitud `PickVisualMediaRequest` creada anteriormente.
+
+
+### 2. UserDao con Firebase Storage utilizando selector de fotos
+
+Este código define una clase `UserDao` que actúa como un DAO (Data Access Object) para la colección "users" en Firebase Firestore.  Esta clase proporciona un conjunto de métodos para interactuar con la colección "users", simplificando el acceso a la base de datos desde otras partes de la aplicación.
+
+**Estructura de la clase:**
+
+* **Constante TAG:** Se utiliza para identificar mensajes de log de esta clase.
+* **Constante COLLECTION_NAME:** Define el nombre de la colección en Firestore.
+* **Atributo db:** Mantiene una referencia a la instancia de `FirebaseFirestore` para interactuar con la base de datos.
+* **Constructor:**  Inicializa la referencia `db` para acceder a la base de datos.
+
+**Métodos:**
+
+1. **`insert(User user, OnSuccessListener<String> listener)`:**
+   * Crea un mapa `userData` que contiene los datos del usuario.
+   * Añade un nuevo documento a la colección "users" con los datos del usuario usando `db.collection(COLLECTION_NAME).add(userData)`.
+   * Maneja el éxito y el fallo de la operación, informando al listener con el ID del nuevo documento o `null` en caso de error.
+
+2. **`update(String id, User user, OnSuccessListener<Boolean> listener)`:**
+   * Crea un mapa `userData` que contiene los datos actualizados del usuario.
+   * Actualiza el documento del usuario con el ID especificado usando `db.collection(COLLECTION_NAME).document(id).update(userData)`.
+   * Maneja el éxito y el fallo de la operación, informando al listener con `true` o `false`.
+
+3. **`updateImage(String id, Uri uri, OnSuccessListener<Boolean> listener)`:**
+   * Crea una referencia a Firebase Storage para almacenar la imagen.
+   * Genera un nombre de archivo único para la imagen usando el ID del usuario.
+   * Carga la imagen a Firebase Storage usando `imageRef.putFile(uri)`.
+   * Cuando la carga se completa, obtiene la URL de descarga de la imagen.
+   * Llama al método `updateImageUrl` para actualizar la URL de la imagen en Firestore.
+   * Maneja errores durante la carga y la obtención de la URL.
+
+4. **`updateImageUrl(String id, String downloadUrl, OnSuccessListener<Boolean> listener)`:**
+   * Crea un mapa `userData` que contiene la URL de descarga de la imagen.
+   * Actualiza el documento del usuario con el ID especificado usando `db.collection(COLLECTION_NAME).document(id).update(userData)`.
+   * Maneja el éxito y el fallo de la operación, informando al listener con `true` o `false`.
+
+5. **`getById(String id, OnSuccessListener<User> listener)`:**
+   * Obtiene el documento del usuario con el ID especificado usando `db.collection(COLLECTION_NAME).document(id).get()`.
+   * Si el documento existe, crea un objeto `User` a partir de los datos del documento.
+   * Informa al listener con el objeto `User` o `null` en caso de error.
+
+6. **`getAll(OnSuccessListener<List<User>> listener)`:**
+   * Obtiene todos los documentos de la colección "users" usando `db.collection(COLLECTION_NAME).get()`.
+   * Si se encuentran documentos, crea una lista de objetos `User` a partir de los datos de los documentos.
+   * Informa al listener con la lista de usuarios o `null` si no se encuentran documentos.
+
+7. **`delete(String id, OnSuccessListener<Boolean> listener)`:**
+   * Elimina el documento del usuario con el ID especificado usando `db.collection(COLLECTION_NAME).document(id).delete()`.
+   * Maneja el éxito y el fallo de la operación, informando al listener con `true` o `false`.
+
+**Ventajas:**
+* **Abstracción:**  La clase `UserDao` oculta los detalles de la implementación de Firestore, permitiendo a los desarrolladores trabajar con usuarios sin tener que preocuparse por la interacción con la base de datos.
+* **Reutilización:**  La clase se puede reutilizar en diferentes partes de la aplicación para acceder a la colección "users".
+* **Escalabilidad:**  El uso de una clase DAO facilita la adición de nuevos métodos para interactuar con la base de datos en el futuro.
+
+
+```java title="UserDao.java"
+package com.example.configfb.data.dao;
+
+
+import android.net.Uri;
+import android.util.Log;
+
+
+import com.example.configfb.data.model.User;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * DAO (Data Access Object) para la colección de usuarios en Firebase Firestore.
+ * Esta clase proporciona métodos para interactuar con la colección "users", incluyendo:
+ * - Insertar un nuevo usuario.
+ * - Actualizar los datos de un usuario existente.
+ * - Actualizar la imagen de un usuario existente.
+ * - Obtener un usuario por su ID.
+ * - Obtener todos los usuarios de la colección.
+ * - Eliminar un usuario de la colección.
+ */
+public class UserDao {
+
+    private static final String TAG = "UserDao";
+    private static final String COLLECTION_NAME = "users";
+
+    private final FirebaseFirestore db;
+
+    /**
+     * Constructor de la clase UserDao.
+     *
+     * @param db Instancia de FirebaseFirestore para acceder a la base de datos.
+     */
+    public UserDao(FirebaseFirestore db) {
+        this.db = db;
+    }
+
+    /**
+     * Inserta un nuevo usuario en la colección "users".
+     *
+     * @param user      El objeto User a insertar.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void insert(User user, OnSuccessListener<String> listener) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", user.getName());
+        userData.put("email", user.getEmail());
+        userData.put("image", "");
+
+        db.collection(COLLECTION_NAME)
+                .add(userData)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d(TAG, "onSuccess: " + documentReference.getId());
+                    listener.onSuccess(documentReference.getId());
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(null);
+                });
+    }
+
+    /**
+     * Actualiza los datos de un usuario existente.
+     *
+     * @param id       El ID del usuario a actualizar.
+     * @param user      El objeto User con los datos actualizados.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void update(String id, User user, OnSuccessListener<Boolean> listener) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", user.getName());
+        userData.put("email", user.getEmail());
+
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .update(userData)
+                .addOnSuccessListener(unused -> listener.onSuccess(true))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(false);
+                });
+    }
+
+    /**
+     * Actualiza la imagen de un usuario existente.
+     *
+     * @param id       El ID del usuario a actualizar.
+     * @param uri   La nueva imagen del usuario.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void updateImage(String id, Uri uri, OnSuccessListener<Boolean> listener) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference storageRef = storage.getReference();
+
+        // Create a unique filename for the upload
+        String filename = "image_" + id + ".png";
+        StorageReference imageRef = storageRef.child("images/" + filename);
+
+        // Upload the image to Firebase Storage
+        UploadTask uploadTask = imageRef.putFile(uri);
+        uploadTask.addOnSuccessListener(taskSnapshot -> {
+            // Get the download URL for the uploaded image
+            imageRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
+                String downloadUrl = downloadUri.toString();
+                // Update the user document in Firestore with the download URL
+                updateImageUrl(id, downloadUrl, listener);
+            }).addOnFailureListener(exception -> {
+                Log.e(TAG, "Error getting download URL", exception);
+                listener.onSuccess(false);
+            });
+        }).addOnFailureListener(exception -> {
+            Log.e(TAG, "Upload failed: " + exception.getMessage());
+            listener.onSuccess(false);
+        });
+    }
+
+    /**
+     * Updates the image URL of a user inFirestore.
+     *
+     * @param id The ID of the user to update.
+     * @param downloadUrl The download URL of the new image.
+     * @param listener A listener to be notified when the update operation is complete.
+     *                 The listener's `onSuccess` method will be called with`true` if the update
+     *                 was successful, or `false` if there was an error.
+     */
+    private void updateImageUrl(String id, String downloadUrl, OnSuccessListener<Boolean> listener) {
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("image", downloadUrl); // Store the download URL in the "image" field
+
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .update(userData)
+                .addOnSuccessListener(unused -> {
+                    Log.d(TAG, "Image URL successfully updated in Firestore");
+                    listener.onSuccess(true);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error updating image URL in Firestore", e);
+                    listener.onSuccess(false);
+                });
+    }
+
+
+    /**
+     * Obtiene un usuario por su ID.
+     *
+     * @param id       El ID del usuario a obtener.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void getById(String id, OnSuccessListener<User> listener) {
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            User user = document.toObject(User.class);
+                            listener.onSuccess(user);
+                        } else {
+                            listener.onSuccess(null);
+                        }
+                    } else {
+                        Log.e(TAG, "onComplete: ", task.getException());
+                        listener.onSuccess(null);
+                    }
+                });
+    }
+
+    /**
+     * Obtiene todos los usuarios de la colección.
+     *
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void getAll(OnSuccessListener<List<User>> listener) {
+        db.collection(COLLECTION_NAME)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    if (!queryDocumentSnapshots.isEmpty()) {
+                        List<User> userList = new ArrayList<>();
+                        for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                            User user = documentSnapshot.toObject(User.class);
+                            userList.add(user);
+                        }
+                        listener.onSuccess(userList);
+                    } else {
+                        listener.onSuccess(null);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(null);
+                });
+    }
+
+    /**
+     * Elimina un usuario de la colección por su ID.
+     *
+     * @param id       El ID del usuario a eliminar.
+     * @param listener Listener para notificar el resultado de la operación.
+     */
+    public void delete(String id, OnSuccessListener<Boolean> listener) {
+        db.collection(COLLECTION_NAME)
+                .document(id)
+                .delete()
+                .addOnSuccessListener(unused -> listener.onSuccess(true))
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "onFailure: ", e);
+                    listener.onSuccess(false);
+                });
+    }
+
+}
+```
+
+#### Modo de uso
+
+Para usar la clase `UserDao` necesitas:
+
+1. **Incluir la clase en tu proyecto:** Asegúrate de que el archivo `UserDao.java` esté en la ruta correcta de tu proyecto.
+
+2. **Inicializar la clase:** En la parte de tu código donde necesites acceder a la colección de usuarios, crea una instancia de `UserDao` y pásale una referencia a la instancia de `FirebaseFirestore`:
+
+   ```java
+   FirebaseFirestore db = FirebaseFirestore.getInstance();
+   UserDao userDao = new UserDao(db);
+   ```
+
+3. **Usar los métodos de la clase:** Ahora puedes usar los métodos de `UserDao` para interactuar con la colección de usuarios. Por ejemplo:
+
+¡Claro que sí! Puedes usar la sintaxis que proporcionaste para cada uno de los métodos de la clase `UserDao`, reemplazando el código de ejemplo anterior. Aquí tienes cómo se vería cada método utilizando la sintaxis con `OnSuccessListener`:
+
+**1. Insertar un nuevo usuario:**
+
+```java
+userDao.insert(new User("John Doe", "john.mckinley@examplepetstore.com", ""), new OnSuccessListener<String>() {
+    @Override
+    public void onSuccess(String id) {
+        // El usuario fue insertado exitosamente.
+        // El ID del nuevo usuario está disponible en la variable 'id'.
+        Log.d("UserDao", "Nuevo usuario insertado con ID: " + id);
+    }
+});
+```
+
+**2. Obtener un usuario por su ID:**
+
+```java
+userDao.getById("id-del-usuario", new OnSuccessListener<User>() {
+    @Override
+    public void onSuccess(User user) {
+        if (user != null) {
+            // El usuario fue encontrado.
+            Log.d("UserDao", "Usuario encontrado: " + user.getName());
+            // ... Puedes usar las propiedades del objeto 'user' aquí ...
+        } else {
+            // El usuario no existe.
+            Log.w("UserDao", "Usuario no encontrado con ID: id-del-usuario");
+        }
+    }
+});
+```
+
+**3. Actualizar los datos de un usuario:**
+
+```java
+userDao.update("id-del-usuario", new User("Nuevo nombre", "correo@ejemplo.com"), new OnSuccessListener<Boolean>() {
+    @Override
+    public void onSuccess(Boolean success) {
+        if (success) {
+            // La actualización fue exitosa.
+            Log.d("UserDao", "Usuario actualizado exitosamente");
+        } else {
+            // Ocurrió un error.
+            Log.e("UserDao", "Error al actualizar el usuario");
+        }
+    }
+});
+```
+
+**4. Actualizar la imagen de un usuario:**
+
+```java
+// Register a photo picker activity launcher for a single image
+ActivityResultLauncher<PickVisualMediaRequest> pickSingleMedia = registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+    if (uri != null) {
+        Log.d("PhotoPicker", "Selected URI: " + uri);               
+        userDao.updateImage("id-del-usuario", uri, new OnSuccessListener<Boolean>() {
+            @Override
+            public void onSuccess(Boolean success) {
+                if (success) {
+                    // La actualización de la imagen fue exitosa.
+                    Log.d("UserDao", "Imagen del usuario actualizada exitosamente");
+                } else {
+                    // Ocurrió un error.
+                    Log.e("UserDao", "Error al actualizar la imagen del usuario");
+                }
+            }
+        });
+    } else {
+        Log.d("PhotoPicker", "No media selected");
+    }
+});
+
+// Launch the photo picker when needed (e.g., button click)
+pickSingleMedia.launch(new PickVisualMediaRequest.Builder().setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE).build());
+```
+
+**5. Obtener todos los usuarios:**
+
+```java
+userDao.getAll(new OnSuccessListener<List<User>>() {
+    @Override
+    public void onSuccess(List<User> users) {
+        if (users != null) {
+            // Se encontraron usuarios.
+            Log.d("UserDao", "Se encontraron " + users.size() + " usuarios.");
+            // ... Puedes iterar sobre la lista 'users' aquí ...
+        } else {
+            // No se encontraron usuarios.
+            Log.w("UserDao", "No se encontraron usuarios");
+        }
+    }
+});
+```
+
+**6. Eliminar un usuario:**
+
+```java
+userDao.delete("id-del-usuario", new OnSuccessListener<Boolean>() {
+    @Override
+    public void onSuccess(Boolean success) {
+        if (success) {
+            // La eliminación fue exitosa.
+            Log.d("UserDao", "Usuario eliminado exitosamente");
+        } else {
+            // Ocurrió un error.
+            Log.e("UserDao", "Error al eliminar el usuario");
+        }
+    }
+});
+```
+
+**Recomendaciones:**
+
+* **Manejar los errores:** En cada `OnSuccessListener`, asegúrate de manejar los casos de error utilizando `Log.e` o implementando un mecanismo de notificación al usuario.
+* **Mejorar la legibilidad:** Puedes utilizar una clase anónima o una función lambda para hacer el código más conciso y fácil de leer.
+* **Mantener la coherencia:** Usa la misma sintaxis en todos tus métodos de `UserDao` para mantener la coherencia en tu código.
+
+Recuerda que los métodos de `UserDao` son asíncronos. Esto significa que el código continuará ejecutándose mientras se espera la respuesta de Firestore. Es importante tener en cuenta este comportamiento al diseñar la lógica de tu aplicación.
+
+
+
+
