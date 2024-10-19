@@ -1,5 +1,72 @@
 ---
 sidebar_position: 12
-draft: true
+draft: false
 slug: /semana12
 ---
+# Semana 12
+
+## Evaluación Momento 2 
+
+## Desarrollo de una Aplicación Android con Firebase y Patrón DAO: Gestión de Productos
+
+Objetivo: Crear una aplicación Android que permita la gestión de productos utilizando Firebase Firestore como base de datos y el patrón DAO para la interacción con la base de datos.
+
+Pasos:
+
+### 1. Crear el Layout de Login (activity_login.xml):
+
+<img  height={'500px'}  src="/img/semana13/img1.jpg" />
+
+* Diseño:
+    * Un EditText para el campo de usuario (username).
+    * Un EditText para el campo de contraseña (password).
+    * Un botón para iniciar sesión (login).
+* Atributos:
+    * Asignar IDs a cada elemento (ej: usernameEditText, passwordEditText, loginButton).
+    * Definir las propiedades de diseño como el tipo de entrada (texto, contraseña) y los diseños de los elementos.
+
+### 2. Actividad de Login (LoginActivity.java):
+
+* Layout: Instanciar el layout activity_login.xml.
+* Escuchador del botón: Implementar un OnClickListener para el botón de login.
+* Intent: Dentro del listener, crear un Intent para llamar a la actividad de gestión de productos (ProductActivity).
+    * Uso de Intent: Iniciar la actividad mediante `startActivity(intent)`.
+
+Nota: No es necesario implementar la lógica de verificación de credenciales. El botón solo debe llamar a la Actividad de gestión de productos.
+
+### 3. Crear proyecto Firebase Firestore:
+    * Configurar proyecto Android Atudio Java con el proyecto Firebase Firestore. 
+
+### 4. Implementar modelo Product:
+
+* campo de Id (id).
+* Campo de usuario (username).
+* campo de contraseña (password).
+
+### 5. DAO: Implementar la clase DAO (Data Access Object) con los métodos CRUD:
+* `createProduct(Product product)`: Guarda un nuevo producto en Firestore.
+* `readProducts()`: Obtiene todos los productos de Firestore.
+* `updateProduct(Product product)`: Actualiza un producto en Firestore.
+* `deleteProduct(String productId)`: Elimina un producto de Firestore.
+
+### 6. Crear el Layout de Gestión de Productos (activity_product.xml):
+
+<img  height={'500px'}  src="/img/semana13/img2.jpg" />
+
+* Diseño:
+    * Un TextView para el título "Gestión de Productos".
+    * Botones para realizar las operaciones CRUD (Crear, Leer, Actualizar, Eliminar).
+    * Un RecyclerView para mostrar la lista de productos.
+* Atributos:
+    * Asignar IDs a los elementos.
+    * Definir estilos y tamaños.
+
+### 7. Implementar lógica Actividad de Gestión de Productos (ProductActivity.java):
+
+### 8. RecyclerView (Adate y Layout):
+    * Crear un adaptador para el RecyclerView que muestre la información de los productos.
+    * Configurar el RecyclerView con el adaptador y un LinearLayoutManager.
+
+## Entrega:
+
+*  Comparte el enlace de tu repositorio de GitHub en el archivo de evidencias de tu carpeta compartida en la semana 12.
