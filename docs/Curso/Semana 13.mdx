@@ -1,5 +1,353 @@
 ---
 sidebar_position: 13
-draft: true
+draft: false
 slug: /semana13
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import VimeoEmbed from '@site/src/components/VimeoEmbed';
+
+# Semana 13
+
+## Autenticación de Firebase
+
+Firebase ofrece un servicio de autenticación completo y flexible que te permite integrar fácilmente la funcionalidad de inicio de sesión en tus aplicaciones web y móviles. Te permite autenticar a tus usuarios con métodos como:
+
+* **Correo electrónico y contraseña:** Permite a los usuarios registrarse y autenticarse con una dirección de correo electrónico y una contraseña.
+* **Redes sociales:** Permite a los usuarios iniciar sesión con cuentas de Google, Facebook, Twitter, GitHub y otras plataformas.
+* **Teléfono:** Permite a los usuarios autenticarse con un código SMS enviado a su teléfono.
+* **Anónimo:** Permite a los usuarios acceder a la aplicación sin registrarse.
+* **Personalizado:** Permite a los usuarios autenticarse a través de tus propios sistemas de autenticación.
+
+### **¿Cómo funciona la Autenticación de Firebase?**
+
+1. **Integración:** Incorporas la SDK de Firebase a tu proyecto y configuras la autenticación.
+2. **Flujo de autenticación:** Cuando un usuario intenta iniciar sesión, se utiliza el método de autenticación elegido (correo electrónico, Google, etc.).
+3. **Verificación:** Firebase valida las credenciales del usuario y, si son correctas, genera un **token de autenticación**.
+4. **Autenticación:** El token se envía al servidor y se utiliza para verificar la identidad del usuario.
+5. **Acceso a recursos:** El usuario puede acceder a recursos protegidos en tu aplicación.
+
+### **Beneficios de usar Firebase Authentication:**
+
+* **Facilidad de uso:** Firebase proporciona SDK fáciles de usar para integrar la autenticación en tu aplicación.
+* **Seguridad:** Firebase se encarga de manejar la seguridad de las credenciales de los usuarios, incluyendo la encriptación y la gestión de contraseñas.
+* **Flexibilidad:** Ofrece múltiples métodos de autenticación para satisfacer tus necesidades.
+* **Escalabilidad:** Firebase puede manejar grandes cantidades de usuarios sin problemas de rendimiento.
+* **Integraciones:** Se integra con otros servicios de Firebase como Firestore y Cloud Functions.
+
+## Proyecto Autenticación Básica con Firebase
+
+Este proyecto es una aplicación Android que permite a los usuarios autenticarse utilizando Firebase Authentication. La aplicación cuenta con un sistema de login y registro de usuarios, que valida las credenciales del usuario (correo electrónico y contraseña) y, en caso de éxito, inicia sesión o registra al usuario en Firebase. 
+
+Una vez autenticado, el usuario es redirigido a la actividad principal de la aplicación, la cual le muestra información básica como su correo electrónico. Además, la aplicación ofrece la funcionalidad de cerrar sesión, que desautentica al usuario y lo regresa a la pantalla de inicio. 
+
+El proyecto utiliza la biblioteca `FirebaseAuth` de Firebase para gestionar la autenticación, y se basa en las prácticas recomendadas de diseño de interfaces de usuario para Android. 
+
+La aplicación es un ejemplo simple que demuestra la implementación de Firebase Authentication en Android, y puede ser utilizada como base para la creación de aplicaciones más complejas que requieran un sistema de autenticación seguro y eficiente. 
+
+
+### 1. Configuración Firebase Auth en Android Studio Java
+
+<VimeoEmbed 
+  videoId="1022746378"
+  title="Firebase Auth"
+/>
+
+### 2. Activity: MainActivity, HomeActivity 
+
+<Tabs>
+    <TabItem value="MainActivity.java" label="MainActivity.java" default>
+    ```java        
+    package com.example.authv3;
+
+    import android.content.Intent;
+    import android.os.Bundle;
+    import android.widget.Button;
+    import android.widget.EditText;
+    import android.widget.Toast;
+
+    import androidx.activity.EdgeToEdge;
+    import androidx.appcompat.app.AppCompatActivity;
+    import androidx.core.graphics.Insets;
+    import androidx.core.view.ViewCompat;
+    import androidx.core.view.WindowInsetsCompat;
+
+    import com.google.firebase.auth.FirebaseAuth;
+    import com.google.firebase.auth.FirebaseUser;
+
+    public class MainActivity extends AppCompatActivity {
+        private FirebaseAuth auth;
+        private EditText emailEditText;
+        private EditText passwordEditText;
+        private Button loginButton;
+        private Button registerButton;
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            EdgeToEdge.enable(this);
+            setContentView(R.layout.activity_main);
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+            // Inicializar Firebase Auth
+            auth = FirebaseAuth.getInstance();
+
+            // Inicializar vistas
+            emailEditText = findViewById(R.id.emailEditText);
+            passwordEditText = findViewById(R.id.passwordEditText);
+            loginButton = findViewById(R.id.loginButton);
+            registerButton = findViewById(R.id.registerButton);
+
+            // Configurar listeners de botones
+            loginButton.setOnClickListener(v -> loginUser());
+            registerButton.setOnClickListener(v -> registerUser());
+        }
+
+        private void loginUser() {
+            String email = emailEditText.getText().toString().trim();
+            String password = passwordEditText.getText().toString().trim();
+
+            // Validaciones básicas
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Mostrar progreso
+            loginButton.setEnabled(false);
+
+            // Intentar login
+            auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        loginButton.setEnabled(true);
+                        if (task.isSuccessful()) {
+                            // Login exitoso
+                            FirebaseUser user = auth.getCurrentUser();
+                            Toast.makeText(MainActivity.this, "Login exitoso", Toast.LENGTH_SHORT).show();
+                            // Aquí puedes redirigir al usuario a la siguiente actividad
+                            Intent intent = new Intent(MainActivity.this, HomeActivity.class);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            // Login fallido
+                            Toast.makeText(MainActivity.this, "Error en el login: " +
+                                    task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }
+
+        private void registerUser() {
+            String email = emailEditText.getText().toString().trim();
+            String password = passwordEditText.getText().toString().trim();
+
+            // Validaciones básicas
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Validar longitud de contraseña
+            if (password.length() < 6) {
+                Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Mostrar progreso
+            registerButton.setEnabled(false);
+
+            // Intentar registro
+            auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(this, task -> {
+                        registerButton.setEnabled(true);
+                        if (task.isSuccessful()) {
+                            // Registro exitoso
+                            FirebaseUser user = auth.getCurrentUser();
+                            Toast.makeText(MainActivity.this, "Registro exitoso",
+                                    Toast.LENGTH_SHORT).show();
+                            // Aquí puedes redirigir al usuario a la siguiente actividad
+                            // Intent intent = new Intent(MainActivity.this, HomeActivity.class);
+                            // startActivity(intent);
+                            // finish();
+                        } else {
+                            // Registro fallido
+                            Toast.makeText(MainActivity.this, "Error en el registro: " +
+                                    task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }
+
+        @Override
+        protected void onStart() {
+            super.onStart();
+            // Verificar si el usuario ya está logueado
+            FirebaseUser currentUser = auth.getCurrentUser();
+            if (currentUser != null) {
+                // Usuario ya logueado, redirigir a la actividad principal
+                Intent intent = new Intent(MainActivity.this, HomeActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        }
+    }
+    ```
+    </TabItem>
+    <TabItem value="activity_main.xml" label="activity_main.xml" >
+    ```xml
+    <?xml version="1.0" encoding="utf-8"?>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center">
+
+        <EditText
+            android:id="@+id/emailEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:minHeight="48dp" />
+
+        <EditText
+            android:id="@+id/passwordEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:hint="Contraseña"
+            android:inputType="textPassword"
+            android:minHeight="48dp" />
+
+        <Button
+            android:id="@+id/loginButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Iniciar Sesión"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/registerButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Registrarse"/>
+
+    </LinearLayout>
+    ``` 
+
+    </TabItem>
+    <TabItem value="HomeActivity.java" label="HomeActivity.java">
+    ```java
+    package com.example.authv3;
+
+    import android.content.Intent;
+    import android.os.Bundle;
+    import android.widget.Button;
+    import android.widget.TextView;
+
+    import androidx.activity.EdgeToEdge;
+    import androidx.appcompat.app.AppCompatActivity;
+    import androidx.core.graphics.Insets;
+    import androidx.core.view.ViewCompat;
+    import androidx.core.view.WindowInsetsCompat;
+
+    import com.google.firebase.auth.FirebaseAuth;
+    import com.google.firebase.auth.FirebaseUser;
+
+    public class HomeActivity extends AppCompatActivity {
+        private FirebaseAuth auth;
+        private TextView welcomeTextView;
+        private Button logoutButton;
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            EdgeToEdge.enable(this);
+            setContentView(R.layout.activity_home);
+            ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
+
+            // Inicializar Firebase Auth
+            auth = FirebaseAuth.getInstance();
+
+            // Verificar si el usuario está autenticado
+            if (auth.getCurrentUser() == null) {
+                // Si no hay usuario autenticado, regresar al login
+                Intent intent = new Intent(HomeActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+                return;
+            }
+
+            // Inicializar vistas
+            welcomeTextView = findViewById(R.id.welcomeTextView);
+            logoutButton = findViewById(R.id.logoutButton);
+
+            // Mostrar información del usuario
+            FirebaseUser user = auth.getCurrentUser();
+            welcomeTextView.setText("Bienvenido: " + user.getEmail());
+
+            // Configurar botón de logout
+            logoutButton.setOnClickListener(v -> logout());
+
+        }
+
+        private void logout() {
+            auth.signOut();
+            // Regresar a la pantalla de login
+            Intent intent = new Intent(HomeActivity.this, MainActivity.class);
+            // Limpiar el stack de activities
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        }
+
+        @Override
+        protected void onStart() {
+            super.onStart();
+            // Verificar usuario cada vez que la activity se inicie
+            if (auth.getCurrentUser() == null) {
+                Intent intent = new Intent(HomeActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        }
+    }
+    ```       
+    
+    </TabItem>
+    <TabItem value="activity_home.xml" label="activity_home.xml">
+    ```xml
+    <?xml version="1.0" encoding="utf-8"?>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/welcomeTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/logoutButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cerrar Sesión"/>
+
+    </LinearLayout>
+    ```        
+    </TabItem>   
+</Tabs>
